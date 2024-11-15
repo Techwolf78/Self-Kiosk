@@ -1,5 +1,5 @@
-import React from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import  {  } from 'react';
+import { BrowserRouter as Router, Route, Routes, } from 'react-router-dom';
 import GateScanner from './Components/GateScanner';
 import AdminDashboard from './Components/AdminDashboard';
 import './App.css';
