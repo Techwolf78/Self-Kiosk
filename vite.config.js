@@ -1,7 +1,16 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-
-// https://vite.dev/config/
-export default defineConfig({
-  plugins: [react()],
-})
+// vite.config.js
+export default {
+  build: {
+    chunkSizeWarningLimit: 1000, // Increase the size limit to 1MB
+    rollupOptions: {
+      external: ['react-router-dom'],
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            return 'vendor'; // Splitting node_modules into a vendor chunk
+          }
+        }
+      }
+    }
+  }
+};
