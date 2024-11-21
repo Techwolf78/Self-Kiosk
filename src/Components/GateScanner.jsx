@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import QrScanner from 'react-qr-scanner';
 import { useNavigate } from 'react-router-dom';
 import { db, ref, get, update } from '../../../backend/firebase';
@@ -8,11 +8,32 @@ const GateScanner = () => {
   const [loading, setLoading] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
-  const [showLoginModal, setShowLoginModal] = useState(false); // State to control the login modal
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   const navigate = useNavigate();
+
+  // Function to speak the message once and close the modal after 1 second
+  const speakMessageOnce = (message) => {
+    if (!window.speechSynthesis.speaking) {
+      const speech = new SpeechSynthesisUtterance(message);
+      speech.lang = 'en-IN';
+      speech.pitch = 1;
+      speech.rate = 0.7;
+      speech.volume = 1;
+
+      // Set up event listener for when the speech ends
+      speech.onend = () => {
+        setTimeout(() => {
+          setModalMessage(""); // Close the modal after 1 second
+        }, 200); // 1 second delay after speech ends
+      };
+
+      // Speak the message
+      window.speechSynthesis.speak(speech);
+    }
+  };
 
   // Handle barcode scan
   const handleScan = async (data) => {
@@ -23,8 +44,8 @@ const GateScanner = () => {
       setModalMessage('Processing...');
 
       try {
-        const guestsRef = ref(db, 'Data'); // Reference to the 'Data' node in Firebase
-        const snapshot = await get(guestsRef); // Fetch data from Firebase
+        const guestsRef = ref(db, 'Data');
+        const snapshot = await get(guestsRef);
 
         if (snapshot.exists()) {
           let foundGuest = null;
@@ -32,7 +53,6 @@ const GateScanner = () => {
 
           snapshot.forEach((childSnapshot) => {
             const guest = childSnapshot.val();
-
             if (guest.barcode === barcode) {
               foundGuest = guest;
               guestKey = childSnapshot.key;
@@ -41,7 +61,11 @@ const GateScanner = () => {
 
           if (foundGuest && guestKey) {
             await update(ref(db, `Data/${guestKey}`), { status: 'Arrived' });
-            setModalMessage(`Access Granted. Welcome ${foundGuest.name}`);
+            const welcomeMessage = ` Welcome ${foundGuest.name}`;
+            setModalMessage(welcomeMessage);
+
+            // Use Speech Synthesis to say the welcome message
+            speakMessageOnce(`Welcome to Synergy Sphere ${foundGuest.name}`);
           } else {
             setModalMessage("Barcode not found. Access Denied.");
           }
@@ -147,11 +171,6 @@ const GateScanner = () => {
 
       {/* Loading spinner */}
       {loading && <div className="mt-4 text-white">Processing...</div>}
-
-      {/* Scanned barcode display */}
-      {scannedData && (
-        <p className="mt-4 text-lg text-white">{`Scanned Barcode: ${scannedData}`}</p>
-      )}
 
       {/* Modal for login */}
       {showLoginModal && (

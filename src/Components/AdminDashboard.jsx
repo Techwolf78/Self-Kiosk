@@ -1,18 +1,38 @@
-import { useState, useEffect } from 'react';
-import { db, ref, onValue } from '../../../backend/firebase'; // Correct import from backend/firebase.js
-import { Bar } from 'react-chartjs-2'; // Importing chart.js to display a visual diagram
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
+import { useState, useEffect } from "react";
+import { db, ref, onValue } from "../../../backend/firebase"; // Correct import from backend/firebase.js
+import { Bar } from "react-chartjs-2"; // Importing chart.js to display a visual diagram
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
+import { jsPDF } from "jspdf"; // Import jsPDF for generating PDF
 
 // Register necessary chart elements
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 const AdminDashboard = () => {
   const [guests, setGuests] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('All'); // Default filter is 'All'
+  const [filter, setFilter] = useState("All"); // Default filter is 'All'
+  const [sortConfig, setSortConfig] = useState({
+    key: "serialNumber",
+    direction: "asc",
+  }); // State for sorting
 
   const fetchGuests = () => {
-    const guestsRef = ref(db, 'Data');
+    const guestsRef = ref(db, "Data");
 
     // Real-time listener for Firebase Realtime Database
     onValue(guestsRef, (snapshot) => {
@@ -22,29 +42,64 @@ const AdminDashboard = () => {
           const guest = childSnapshot.val();
           guestsList.push({
             id: childSnapshot.key,
+            serialNumber: guest.serialNumber, // Add serial number from the DB
             barcode: guest.barcode,
             name: guest.name,
-            status: guest.status || 'Pending', // Default status if not set
+            organization: guest.organization || "N/A", // Default value for organization
+            status: guest.status || "Pending", // Default status if not set
           });
         });
         setGuests(guestsList); // Set the state with fetched guest data
       } else {
-        console.log('No guests found.');
+        console.log("No guests found.");
       }
       setLoading(false); // Stop loading when data is fetched
     });
   };
 
+  // Sorting function to sort guests based on the selected column and direction
+  const sortedGuests = () => {
+    const sortedData = [...guests];
+
+    // Sort based on serial number as a number
+    sortedData.sort((a, b) => {
+      const numA = parseInt(a.serialNumber, 10); // Convert to number
+      const numB = parseInt(b.serialNumber, 10); // Convert to number
+
+      if (numA < numB) {
+        return sortConfig.direction === "asc" ? -1 : 1;
+      }
+      if (numA > numB) {
+        return sortConfig.direction === "asc" ? 1 : -1;
+      }
+      return 0;
+    });
+    return sortedData;
+  };
+
+  // Toggle sort direction when the column header is clicked
+  const requestSort = (key) => {
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setSortConfig({ key, direction });
+  };
+
   // Filter the guests based on the selected filter
-  const filteredGuests = guests.filter(guest => {
-    if (filter === 'All') return true; // No filter, show all guests
+  const filteredGuests = sortedGuests().filter((guest) => {
+    if (filter === "All") return true; // No filter, show all guests
     return guest.status === filter;
   });
 
   // Count the different statuses for filtered guests
   const countStatuses = () => {
-    const arrivedCount = filteredGuests.filter((guest) => guest.status === 'Arrived').length;
-    const pendingCount = filteredGuests.filter((guest) => guest.status === 'Pending').length;
+    const arrivedCount = filteredGuests.filter(
+      (guest) => guest.status === "Arrived"
+    ).length;
+    const pendingCount = filteredGuests.filter(
+      (guest) => guest.status === "Pending"
+    ).length;
     const totalCount = filteredGuests.length;
     return { arrivedCount, pendingCount, totalCount };
   };
@@ -57,39 +112,120 @@ const AdminDashboard = () => {
 
   // Chart data
   const chartData = {
-    labels: ['Arrived', 'Pending'],
+    labels: ["Arrived", "Pending"],
     datasets: [
       {
-        label: 'Guest Status Count',
+        label: "Guest Status Count",
         data: [arrivedCount, pendingCount],
-        backgroundColor: ['#34D399', '#FBBF24'], // Green for arrived, Yellow for pending
-        borderColor: ['#10B981', '#F59E0B'],
+        backgroundColor: ["#34D399", "#FBBF24"], // Green for arrived, Yellow for pending
+        borderColor: ["#10B981", "#F59E0B"],
         borderWidth: 1,
       },
     ],
   };
 
+  // Function to export guest data to PDF
+  const downloadPDF = () => {
+    const doc = new jsPDF();
+
+    // Set title and styling
+    doc.setFontSize(20);
+    doc.text("Guest Attendance Report", 14, 22);
+
+    // Table Data
+    let yPosition = 50;
+    const lineHeight = 10; // Height of each row
+    const maxY = 290; // Max Y position before needing a page break
+    const headerPrinted = false; // Flag to track if headers are printed
+
+    // Function to print the table headers with black color
+    const printHeaders = () => {
+      doc.setFontSize(12);
+      doc.setTextColor(0, 0, 0); // Ensure header text is always black
+      doc.text("Serial Number", 14, yPosition); // Adjusted position for Serial Number
+      doc.text("Name", 50, yPosition); // Adjusted position for Name
+      doc.text("Organization", 110, yPosition); // Adjusted position for Organization
+      doc.text("Status", 180, yPosition); // Status column on the right
+    };
+
+    // Print headers for the first page
+    printHeaders();
+
+    // Update yPosition after header
+    yPosition += lineHeight;
+
+    // Table Data
+    filteredGuests.forEach((guest, index) => {
+      // Check if the content exceeds the page limit
+      if (yPosition + lineHeight > maxY) {
+        doc.addPage(); // Add a new page
+        yPosition = 20; // Reset yPosition for the new page
+
+        // Only print headers on the first page
+        printHeaders();
+        yPosition += lineHeight; // Add space after headers
+      }
+
+      // Add guest data with adjusted column widths
+      doc.setTextColor(0, 0, 0); // Default color (black) for all text except status
+      doc.text(guest.serialNumber.toString(), 14, yPosition); // Adjusted Serial Number position
+      doc.text(guest.name, 50, yPosition); // Adjusted Name position
+      doc.text(guest.organization, 110, yPosition); // Adjusted Organization position
+
+      // Set color and text for the Status column
+      if (guest.status === "Arrived") {
+        doc.setTextColor(34, 211, 153); // Green color for 'Arrived'
+      } else if (guest.status === "Pending") {
+        doc.setTextColor(251, 191, 36); // Yellow color for 'Pending'
+      } else {
+        doc.setTextColor(0, 0, 0); // Default black color for other statuses
+      }
+      doc.text(guest.status, 180, yPosition); // Status column with color
+
+      // Move yPosition down for the next row
+      yPosition += lineHeight;
+    });
+
+    // Save the PDF
+    doc.save("guest_data.pdf");
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-r from-gray-800 via-gray-700 to-gray-600 p-4 sm:p-8">
-      <h1 className="text-3xl sm:text-4xl font-bold text-white mb-6">Admin Dashboard</h1>
+      <h1 className="text-3xl sm:text-4xl font-bold text-white mb-6">
+        Admin Dashboard
+      </h1>
 
       <div className="flex flex-col sm:flex-row space-y-6 sm:space-y-0 sm:space-x-8">
         {/* Left side (Table) */}
         <div className="w-full sm:w-7/12 bg-white p-6 sm:p-8 rounded-lg shadow-lg">
-          <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-4">Guest Attendance</h2>
+          <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-4">
+            Guest Attendance
+          </h2>
 
-          {/* Filter Dropdown */}
-          <div className="mb-4">
-            <label className="text-gray-800 font-semibold mr-4">Filter by Status: </label>
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              className="p-2 border rounded-md bg-white"
+          {/* Filter & Download PDF Button */}
+          <div className="flex flex-col sm:flex-row items-center mb-4 space-y-4 sm:space-y-0 sm:space-x-4">
+            <div className="flex items-center">
+              <label className="text-gray-800 font-semibold mr-4">
+                Filter by Status:{" "}
+              </label>
+              <select
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                className="p-2 border rounded-md bg-white"
+              >
+                <option value="All">All</option>
+                <option value="Arrived">Arrived</option>
+                <option value="Pending">Pending</option>
+              </select>
+            </div>
+
+            <button
+              onClick={downloadPDF}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-200"
             >
-              <option value="All">All</option>
-              <option value="Arrived">Arrived</option>
-              <option value="Pending">Pending</option>
-            </select>
+              Download PDF
+            </button>
           </div>
 
           {loading ? (
@@ -99,20 +235,67 @@ const AdminDashboard = () => {
               <table className="min-w-full table-auto border-separate border-spacing-2">
                 <thead>
                   <tr className="bg-gray-200">
-                    <th className="px-6 py-3 text-left text-gray-800">Barcode</th>
-                    <th className="px-6 py-3 text-left text-gray-800">Name</th>
-                    <th className="px-6 py-3 text-left text-gray-800">Status</th>
+                    <th
+                      onClick={() => requestSort("serialNumber")}
+                      className="px-4 py-4 text-left text-gray-800 cursor-pointer"
+                      style={{ width: "10%" }}
+                    >
+                      Serial Number
+                      {sortConfig.key === "serialNumber"
+                        ? sortConfig.direction === "asc"
+                          ? " ↑"
+                          : " ↓"
+                        : null}
+                    </th>
+                    <th
+                      className="px-6 py-4 text-left text-gray-800"
+                      style={{ width: "15%" }}
+                    >
+                      Barcode
+                    </th>
+                    <th
+                      className="px-6 py-4 text-left text-gray-800"
+                      style={{ width: "20%" }}
+                    >
+                      Name
+                    </th>
+                    <th
+                      className="px-6 py-4 text-left text-gray-800"
+                      style={{ width: "30%" }}
+                    >
+                      Organization
+                    </th>
+                    <th
+                      className="px-6 py-4 text-left text-gray-800"
+                      style={{ width: "15%" }}
+                    >
+                      Status
+                    </th>
                   </tr>
                 </thead>
+
                 <tbody>
                   {filteredGuests.map((guest) => (
-                    <tr key={guest.id} className="hover:bg-gray-50 transition duration-200">
-                      <td className="px-6 py-4 text-gray-700">{guest.barcode}</td>
+                    <tr
+                      key={guest.id}
+                      className="hover:bg-gray-50 transition duration-200"
+                    >
+                      <td className="px-6 py-4 text-gray-700">
+                        {guest.serialNumber}
+                      </td>
+                      <td className="px-6 py-4 text-gray-700">
+                        {guest.barcode}
+                      </td>
                       <td className="px-6 py-4 text-gray-700">{guest.name}</td>
+                      <td className="px-6 py-4 text-gray-700">
+                        {guest.organization}
+                      </td>
                       <td className="px-6 py-4">
                         <span
                           className={`${
-                            guest.status === 'Arrived' ? 'text-green-600' : 'text-yellow-600'
+                            guest.status === "Arrived"
+                              ? "text-green-600"
+                              : "text-yellow-600"
                           } font-semibold`}
                         >
                           {guest.status}
@@ -128,15 +311,19 @@ const AdminDashboard = () => {
 
         {/* Right side (Statistics & Chart) */}
         <div className="w-full sm:w-5/12 bg-white p-6 sm:p-8 rounded-lg shadow-lg">
-          <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-4">Guest Statistics</h2>
-          
+          <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-4">
+            Guest Statistics
+          </h2>
+
           {/* Statistics */}
           <div className="space-y-4">
             <div className="text-lg font-semibold text-gray-700">
-              Arrived Count: <span className="text-green-600">{arrivedCount}</span>
+              Arrived Count:{" "}
+              <span className="text-green-600">{arrivedCount}</span>
             </div>
             <div className="text-lg font-semibold text-gray-700">
-              Pending Count: <span className="text-yellow-600">{pendingCount}</span>
+              Pending Count:{" "}
+              <span className="text-yellow-600">{pendingCount}</span>
             </div>
             <div className="text-lg font-semibold text-gray-700">
               Total Count: <span className="text-blue-600">{totalCount}</span>
@@ -151,7 +338,7 @@ const AdminDashboard = () => {
                 responsive: true,
                 plugins: {
                   legend: { display: false },
-                  title: { display: true, text: 'Guest Status Distribution' },
+                  title: { display: true, text: "Guest Status Distribution" },
                 },
               }}
             />
