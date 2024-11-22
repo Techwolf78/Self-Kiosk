@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import QrScanner from 'react-qr-scanner';
 import { useNavigate } from 'react-router-dom';
-import { db, ref, get, update } from '../../../backend/firebase';
 
 const GateScanner = () => {
   const [scannedData, setScannedData] = useState(null);
@@ -35,49 +34,42 @@ const GateScanner = () => {
     }
   };
 
-  // Handle barcode scan
   const handleScan = async (data) => {
     if (data) {
       const barcode = data.text;
       setScannedData(barcode);
       setLoading(true);
       setModalMessage('Processing...');
-
+  
       try {
-        const guestsRef = ref(db, 'Data');
-        const snapshot = await get(guestsRef);
-
-        if (snapshot.exists()) {
-          let foundGuest = null;
-          let guestKey = null;
-
-          snapshot.forEach((childSnapshot) => {
-            const guest = childSnapshot.val();
-            if (guest.barcode === barcode) {
-              foundGuest = guest;
-              guestKey = childSnapshot.key;
-            }
-          });
-
-          if (foundGuest && guestKey) {
-            await update(ref(db, `Data/${guestKey}`), { status: 'Arrived' });
-            const welcomeMessage = ` Welcome ${foundGuest.name}`;
-            setModalMessage(welcomeMessage);
-
-            // Use Speech Synthesis to say the welcome message
-            speakMessageOnce(`Welcome to Synergy Sphere ${foundGuest.name}`);
-          } else {
-            setModalMessage("Barcode not found. Access Denied.");
-          }
+        const response = await fetch('https://self-kiosk-backenddb.onrender.com/api/check-in', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ barcode }),
+        });
+  
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+  
+        const result = await response.json();
+        console.log('API Response:', result); // Add this for debugging
+  
+        if (result.status === 'found') {
+          const welcomeMessage = `Welcome ${result.name}`;
+          setModalMessage(welcomeMessage);
+          speakMessageOnce(`Welcome to Synergy Sphere ${result.name}`);
         } else {
-          setModalMessage("No guests in the database.");
+          setModalMessage("Barcode not found. Access Denied.");
         }
       } catch (error) {
         console.error("Error verifying guest:", error);
         setModalMessage("Error verifying guest. Please try again.");
       } finally {
         setLoading(false);
-        setShowScanner(false); // Close scanner after processing
+        setShowScanner(false);
       }
     }
   };
@@ -235,11 +227,11 @@ const GateScanner = () => {
       {/* Modal for messages */}
       {modalMessage && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white rounded-lg p-8 w-96 text-center shadow-xl">
-            <h3 className="text-xl font-semibold text-gray-800 mb-4">{modalMessage}</h3>
+          <div className="bg-white p-8 rounded-lg text-center shadow-xl">
+            <p className="text-xl font-semibold">{modalMessage}</p>
             <button
               onClick={() => setModalMessage("")}
-              className="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-300"
+              className="mt-4 bg-blue-600 text-white py-2 px-6 rounded-lg"
             >
               Close
             </button>
