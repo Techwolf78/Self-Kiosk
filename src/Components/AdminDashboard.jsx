@@ -33,7 +33,7 @@ const AdminDashboard = () => {
   // Fetch guest data from your backend API (deployed on Render)
   const fetchGuests = async () => {
     try {
-      const response = await fetch("https://your-backend-url/render/api/guests"); // Replace with your Render API URL
+      const response = await fetch("https://self-kiosk-backenddb.onrender.com/api/check-in"); // Replace with your Render API URL
       const data = await response.json();
 
       if (data && data.guests) {
