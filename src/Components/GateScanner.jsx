@@ -35,42 +35,31 @@ const GateScanner = () => {
     }
   };
 
-  // Handle barcode scan
   const handleScan = async (data) => {
     if (data) {
       const barcode = data.text;
       setScannedData(barcode);
       setLoading(true);
       setModalMessage('Processing...');
-
+  
       try {
-        const guestsRef = ref(db, 'Data');
-        const snapshot = await get(guestsRef);
-
-        if (snapshot.exists()) {
-          let foundGuest = null;
-          let guestKey = null;
-
-          snapshot.forEach((childSnapshot) => {
-            const guest = childSnapshot.val();
-            if (guest.barcode === barcode) {
-              foundGuest = guest;
-              guestKey = childSnapshot.key;
-            }
-          });
-
-          if (foundGuest && guestKey) {
-            await update(ref(db, `Data/${guestKey}`), { status: 'Arrived' });
-            const welcomeMessage = ` Welcome ${foundGuest.name}`;
-            setModalMessage(welcomeMessage);
-
-            // Use Speech Synthesis to say the welcome message
-            speakMessageOnce(`Welcome to Synergy Sphere ${foundGuest.name}`);
-          } else {
-            setModalMessage("Barcode not found. Access Denied.");
-          }
+        // Send a POST request to the deployed backend on Render
+        const response = await fetch('https://self-kiosk-backenddb.onrender.com/api/check-in', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ barcode }),  // Send barcode in the body
+        });
+  
+        const result = await response.json();
+  
+        if (result.status === 'found') {
+          const welcomeMessage = `Welcome ${result.name}`;
+          setModalMessage(welcomeMessage);
+          speakMessageOnce(`Welcome to Synergy Sphere ${result.name}`);
         } else {
-          setModalMessage("No guests in the database.");
+          setModalMessage("Barcode not found. Access Denied.");
         }
       } catch (error) {
         console.error("Error verifying guest:", error);
@@ -81,6 +70,7 @@ const GateScanner = () => {
       }
     }
   };
+  
 
   // Handle errors during QR scan
   const handleError = (err) => {
