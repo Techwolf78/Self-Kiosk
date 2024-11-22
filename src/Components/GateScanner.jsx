@@ -13,7 +13,6 @@ const GateScanner = () => {
   const [loginError, setLoginError] = useState('');
   const navigate = useNavigate();
 
-  // Function to speak the message once and close the modal after 1 second
   const speakMessageOnce = (message) => {
     if (!window.speechSynthesis.speaking) {
       const speech = new SpeechSynthesisUtterance(message);
@@ -22,14 +21,12 @@ const GateScanner = () => {
       speech.rate = 0.7;
       speech.volume = 1;
 
-      // Set up event listener for when the speech ends
       speech.onend = () => {
         setTimeout(() => {
-          setModalMessage(""); // Close the modal after 1 second
-        }, 200); // 1 second delay after speech ends
+          setModalMessage(""); 
+        }, 200);
       };
 
-      // Speak the message
       window.speechSynthesis.speak(speech);
     }
   };
@@ -40,53 +37,52 @@ const GateScanner = () => {
       setScannedData(barcode);
       setLoading(true);
       setModalMessage('Processing...');
-
+      
       try {
-        // Send a POST request to the backend API
         const response = await fetch('https://self-kiosk-backenddb.onrender.com/api/check-in', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ barcode }),  // Send barcode in the body
+          body: JSON.stringify({ barcode }),
         });
 
         const result = await response.json();
 
-        if (result.status === 'found') {
-          const welcomeMessage = `Welcome ${result.name}`;
-          setModalMessage(welcomeMessage);
-          speakMessageOnce(`Welcome to Synergy Sphere ${result.name}`);
+        if (response.ok) {
+          if (result.status === 'found') {
+            const welcomeMessage = `Welcome ${result.name}`;
+            setModalMessage(welcomeMessage);
+            speakMessageOnce(`Welcome to Synergy Sphere ${result.name}`);
+          } else {
+            setModalMessage("Barcode not found. Access Denied.");
+          }
         } else {
-          setModalMessage("Barcode not found. Access Denied.");
+          setModalMessage("Error: Unable to verify the barcode.");
         }
       } catch (error) {
         console.error("Error verifying guest:", error);
         setModalMessage("Error verifying guest. Please try again.");
       } finally {
         setLoading(false);
-        setShowScanner(false); // Close scanner after processing
+        setShowScanner(false);
       }
     }
   };
 
-  // Handle errors during QR scan
   const handleError = (err) => {
     console.error("Error scanning barcode:", err);
     setModalMessage("Error scanning barcode. Please try again.");
   };
 
-  // Open the scanner when the "Start Scan" button is clicked
   const startScan = () => {
     setShowScanner(true);
   };
 
-  // Open the login modal when the "Admin Dashboard" button is clicked
   const openLoginModal = () => {
     setShowLoginModal(true);
   };
 
-  // Close the login modal
   const closeLoginModal = () => {
     setShowLoginModal(false);
     setUsername('');
@@ -94,7 +90,6 @@ const GateScanner = () => {
     setLoginError('');
   };
 
-  // Handle login form submission
   const handleLogin = (e) => {
     e.preventDefault();
 
@@ -110,12 +105,10 @@ const GateScanner = () => {
   return (
     <div className="min-h-screen bg-gradient-to-r from-blue-500 via-blue-400 to-blue-300 p-4 sm:p-8">
       <div className="flex flex-col sm:flex-row items-center justify-between mb-6">
-        {/* Company Logo */}
         <div className="flex items-center justify-center sm:justify-start mb-4 sm:mb-0 w-full sm:w-auto">
           <img src="NewLogo.png" alt="Company Logo" className="w-32 h-16 mr-4" />
         </div>
 
-        {/* Admin Dashboard Button */}
         <button
           onClick={openLoginModal}
           className="bg-green-600 text-white py-2 px-6 rounded-lg text-xl shadow-lg hover:bg-green-500 transition duration-300"
@@ -136,7 +129,6 @@ const GateScanner = () => {
         </button>
       </div>
 
-      {/* QR Scanner */}
       {showScanner && (
         <div className="mt-6 max-w-full w-full mx-auto">
           <QrScanner
@@ -157,14 +149,11 @@ const GateScanner = () => {
         </div>
       )}
 
-      {/* Loading spinner */}
       {loading && <div className="mt-4 text-white">Processing...</div>}
 
-      {/* Modal for login */}
       {showLoginModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white rounded-lg p-8 w-full sm:w-96 text-center shadow-xl relative">
-            {/* Close Button */}
             <button
               onClick={closeLoginModal}
               className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
@@ -176,7 +165,6 @@ const GateScanner = () => {
 
             <h2 className="text-2xl font-semibold text-center text-blue-600 mb-6">Admin Login</h2>
 
-            {/* Login Form */}
             <form onSubmit={handleLogin}>
               <div className="mb-4">
                 <label htmlFor="username" className="block text-gray-700">Username</label>
@@ -202,7 +190,6 @@ const GateScanner = () => {
                 />
               </div>
 
-              {/* Error message */}
               {loginError && (
                 <div className="mb-4 text-red-500 text-center">
                   {loginError}
@@ -220,7 +207,6 @@ const GateScanner = () => {
         </div>
       )}
 
-      {/* Modal for messages */}
       {modalMessage && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white p-8 rounded-lg text-center shadow-xl">

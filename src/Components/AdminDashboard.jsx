@@ -33,7 +33,7 @@ const AdminDashboard = () => {
   // Fetch guest data from your backend API (deployed on Render)
   const fetchGuests = async () => {
     try {
-      const response = await fetch("https://self-kiosk-backenddb.onrender.com/api/check-in"); // Replace with your Render API URL
+      const response = await fetch("https://your-backend-url/render/api/guests"); // Replace with your Render API URL
       const data = await response.json();
 
       if (data && data.guests) {
@@ -187,7 +187,7 @@ const AdminDashboard = () => {
     doc.save("guest_data.pdf");
   };
 
-  return(
+  return (
     <div className="min-h-screen bg-gradient-to-r from-gray-800 via-gray-700 to-gray-600 p-4 sm:p-8">
       <h1 className="text-3xl sm:text-4xl font-bold text-white mb-6">
         Admin Dashboard
@@ -219,126 +219,85 @@ const AdminDashboard = () => {
 
             <button
               onClick={downloadPDF}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-200"
+              className="bg-blue-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-blue-600"
             >
               Download PDF
             </button>
           </div>
 
+          {/* Table */}
           {loading ? (
-            <div className="text-center text-lg">Loading...</div>
+            <p className="text-center text-lg">Loading...</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full table-auto border-separate border-spacing-2">
-                <thead>
-                  <tr className="bg-gray-200">
-                    <th
-                      onClick={() => requestSort("serialNumber")}
-                      className="px-4 py-4 text-left text-gray-800 cursor-pointer"
-                      style={{ width: "10%" }}
-                    >
-                      Serial Number
-                      {sortConfig.key === "serialNumber"
-                        ? sortConfig.direction === "asc"
-                          ? " ↑"
-                          : " ↓"
-                        : null}
-                    </th>
-                    <th
-                      className="px-6 py-4 text-left text-gray-800"
-                      style={{ width: "15%" }}
-                    >
-                      Barcode
-                    </th>
-                    <th
-                      className="px-6 py-4 text-left text-gray-800"
-                      style={{ width: "20%" }}
-                    >
-                      Name
-                    </th>
-                    <th
-                      className="px-6 py-4 text-left text-gray-800"
-                      style={{ width: "30%" }}
-                    >
-                      Organization
-                    </th>
-                    <th
-                      className="px-6 py-4 text-left text-gray-800"
-                      style={{ width: "15%" }}
-                    >
-                      Status
-                    </th>
+            <table className="min-w-full table-auto border-separate border-spacing-2">
+              <thead>
+                <tr className="bg-gray-200">
+                  <th
+                    onClick={() => requestSort("serialNumber")}
+                    className="px-4 py-4 text-left text-gray-800 cursor-pointer"
+                  >
+                    Serial Number
+                    {sortConfig.key === "serialNumber" &&
+                      (sortConfig.direction === "asc" ? " ↑" : " ↓")}
+                  </th>
+                  <th
+                    onClick={() => requestSort("barcode")}
+                    className="px-6 py-4 text-left text-gray-800 cursor-pointer"
+                  >
+                    Barcode
+                  </th>
+                  <th
+                    onClick={() => requestSort("name")}
+                    className="px-6 py-4 text-left text-gray-800 cursor-pointer"
+                  >
+                    Name
+                    {sortConfig.key === "name" &&
+                      (sortConfig.direction === "asc" ? " ↑" : " ↓")}
+                  </th>
+                  <th
+                    onClick={() => requestSort("organization")}
+                    className="px-6 py-4 text-left text-gray-800 cursor-pointer"
+                  >
+                    Organization
+                  </th>
+                  <th
+                    onClick={() => requestSort("status")}
+                    className="px-6 py-4 text-left text-gray-800 cursor-pointer"
+                  >
+                    Status
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredGuests.map((guest) => (
+                  <tr key={guest.id} className="hover:bg-gray-50 transition duration-200">
+                    <td className="px-6 py-4 text-gray-700">{guest.serialNumber}</td>
+                    <td className="px-6 py-4 text-gray-700">{guest.barcode}</td>
+                    <td className="px-6 py-4 text-gray-700">{guest.name}</td>
+                    <td className="px-6 py-4 text-gray-700">{guest.organization}</td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`${
+                          guest.status === "Arrived" ? "text-green-600" : "text-yellow-600"
+                        } font-semibold`}
+                      >
+                        {guest.status}
+                      </span>
+                    </td>
                   </tr>
-                </thead>
-
-                <tbody>
-                  {filteredGuests.map((guest) => (
-                    <tr
-                      key={guest.id}
-                      className="hover:bg-gray-50 transition duration-200"
-                    >
-                      <td className="px-6 py-4 text-gray-700">
-                        {guest.serialNumber}
-                      </td>
-                      <td className="px-6 py-4 text-gray-700">
-                        {guest.barcode}
-                      </td>
-                      <td className="px-6 py-4 text-gray-700">{guest.name}</td>
-                      <td className="px-6 py-4 text-gray-700">
-                        {guest.organization}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span
-                          className={`${
-                            guest.status === "Arrived"
-                              ? "text-green-600"
-                              : "text-yellow-600"
-                          } font-semibold`}
-                        >
-                          {guest.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
           )}
         </div>
 
-        {/* Right side (Statistics & Chart) */}
+        {/* Right side (Chart) */}
         <div className="w-full sm:w-5/12 bg-white p-6 sm:p-8 rounded-lg shadow-lg">
           <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-4">
-            Guest Statistics
+            Guest Status Breakdown
           </h2>
-
-          {/* Statistics */}
-          <div className="space-y-4">
-            <div className="text-lg font-semibold text-gray-700">
-              Arrived Count:{" "}
-              <span className="text-green-600">{arrivedCount}</span>
-            </div>
-            <div className="text-lg font-semibold text-gray-700">
-              Pending Count:{" "}
-              <span className="text-yellow-600">{pendingCount}</span>
-            </div>
-            <div className="text-lg font-semibold text-gray-700">
-              Total Count: <span className="text-blue-600">{totalCount}</span>
-            </div>
-          </div>
-
-          {/* Bar Chart */}
-          <div className="mt-6">
-            <Bar
-              data={chartData}
-              options={{
-                responsive: true,
-                plugins: {
-                  legend: { display: false },
-                  title: { display: true, text: "Guest Status Distribution" },
-                },
-              }}
-            />
+          <div className="max-w-full">
+            <Bar data={chartData} options={{ responsive: true }} />
           </div>
         </div>
       </div>
