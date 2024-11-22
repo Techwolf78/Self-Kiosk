@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import QrScanner from 'react-qr-scanner';
 import { useNavigate } from 'react-router-dom';
-import { db, ref, get, update } from '../../../backend/firebase';
 
 const GateScanner = () => {
   const [scannedData, setScannedData] = useState(null);
@@ -41,9 +40,9 @@ const GateScanner = () => {
       setScannedData(barcode);
       setLoading(true);
       setModalMessage('Processing...');
-  
+
       try {
-        // Send a POST request to the deployed backend on Render
+        // Send a POST request to the backend API
         const response = await fetch('https://self-kiosk-backenddb.onrender.com/api/check-in', {
           method: 'POST',
           headers: {
@@ -51,9 +50,9 @@ const GateScanner = () => {
           },
           body: JSON.stringify({ barcode }),  // Send barcode in the body
         });
-  
+
         const result = await response.json();
-  
+
         if (result.status === 'found') {
           const welcomeMessage = `Welcome ${result.name}`;
           setModalMessage(welcomeMessage);
@@ -70,7 +69,6 @@ const GateScanner = () => {
       }
     }
   };
-  
 
   // Handle errors during QR scan
   const handleError = (err) => {
@@ -225,11 +223,11 @@ const GateScanner = () => {
       {/* Modal for messages */}
       {modalMessage && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white rounded-lg p-8 w-96 text-center shadow-xl">
-            <h3 className="text-xl font-semibold text-gray-800 mb-4">{modalMessage}</h3>
+          <div className="bg-white p-8 rounded-lg text-center shadow-xl">
+            <p className="text-xl font-semibold">{modalMessage}</p>
             <button
               onClick={() => setModalMessage("")}
-              className="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-300"
+              className="mt-4 bg-blue-600 text-white py-2 px-6 rounded-lg"
             >
               Close
             </button>
