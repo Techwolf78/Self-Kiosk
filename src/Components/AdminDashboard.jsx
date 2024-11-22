@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { db, ref, onValue } from "../../../backend/firebase"; // Correct import from backend/firebase.js
 import { Bar } from "react-chartjs-2"; // Importing chart.js to display a visual diagram
 import {
   Chart as ChartJS,
@@ -30,38 +31,40 @@ const AdminDashboard = () => {
     direction: "asc",
   }); // State for sorting
 
-  // Fetch guest data from your backend API (deployed on Render)
-  const fetchGuests = async () => {
-    try {
-      const response = await fetch("https://self-kiosk-backenddb.onrender.com/api/check-in"); // Replace with your Render API URL
-      const data = await response.json();
+  const fetchGuests = () => {
+    const guestsRef = ref(db, "Data");
 
-      if (data && data.guests) {
-        const guestsList = data.guests.map((guest) => ({
-          id: guest.id,
-          serialNumber: guest.serialNumber,
-          barcode: guest.barcode,
-          name: guest.name,
-          organization: guest.organization || "N/A", // Default value for organization
-          status: guest.status || "Pending", // Default status if not set
-        }));
+    // Real-time listener for Firebase Realtime Database
+    onValue(guestsRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const guestsList = [];
+        snapshot.forEach((childSnapshot) => {
+          const guest = childSnapshot.val();
+          guestsList.push({
+            id: childSnapshot.key,
+            serialNumber: guest.serialNumber, // Add serial number from the DB
+            barcode: guest.barcode,
+            name: guest.name,
+            organization: guest.organization || "N/A", // Default value for organization
+            status: guest.status || "Pending", // Default status if not set
+          });
+        });
         setGuests(guestsList); // Set the state with fetched guest data
       } else {
         console.log("No guests found.");
       }
-    } catch (error) {
-      console.error("Error fetching guests:", error);
-    }
-    setLoading(false); // Stop loading when data is fetched
+      setLoading(false); // Stop loading when data is fetched
+    });
   };
 
   // Sorting function to sort guests based on the selected column and direction
   const sortedGuests = () => {
     const sortedData = [...guests];
 
+    // Sort based on serial number as a number
     sortedData.sort((a, b) => {
-      const numA = parseInt(a.serialNumber, 10);
-      const numB = parseInt(b.serialNumber, 10);
+      const numA = parseInt(a.serialNumber, 10); // Convert to number
+      const numB = parseInt(b.serialNumber, 10); // Convert to number
 
       if (numA < numB) {
         return sortConfig.direction === "asc" ? -1 : 1;
@@ -85,7 +88,7 @@ const AdminDashboard = () => {
 
   // Filter the guests based on the selected filter
   const filteredGuests = sortedGuests().filter((guest) => {
-    if (filter === "All") return true;
+    if (filter === "All") return true; // No filter, show all guests
     return guest.status === filter;
   });
 
@@ -187,7 +190,7 @@ const AdminDashboard = () => {
     doc.save("guest_data.pdf");
   };
 
-  return(
+  return (
     <div className="min-h-screen bg-gradient-to-r from-gray-800 via-gray-700 to-gray-600 p-4 sm:p-8">
       <h1 className="text-3xl sm:text-4xl font-bold text-white mb-6">
         Admin Dashboard
