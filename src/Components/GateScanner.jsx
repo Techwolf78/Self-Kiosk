@@ -43,7 +43,7 @@ const GateScanner = () => {
 
       try {
         // Send a POST request to the backend API
-        const response = await fetch('https://self-kiosk-backenddb-1.onrender.com/api/check-in', {
+        const response = await fetch('https://self-kiosk-backenddb.onrender.com/api/check-in', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

@@ -33,36 +33,27 @@ const AdminDashboard = () => {
   // Fetch guest data from your backend API (deployed on Render)
   const fetchGuests = async () => {
     try {
-      const response = await fetch("https://self-kiosk-backenddb-1.onrender.com/api/check-in");
-      
-      // Check if the response is not OK (e.g., 404 or 500)
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-  
-      // Try parsing the JSON
+      const response = await fetch("https://self-kiosk-backenddb.onrender.com/api/check-in"); // Replace with your Render API URL
       const data = await response.json();
-  
+
       if (data && data.guests) {
         const guestsList = data.guests.map((guest) => ({
           id: guest.id,
           serialNumber: guest.serialNumber,
           barcode: guest.barcode,
           name: guest.name,
-          organization: guest.organization || "N/A",
-          status: guest.status || "Pending",
+          organization: guest.organization || "N/A", // Default value for organization
+          status: guest.status || "Pending", // Default status if not set
         }));
-        setGuests(guestsList);
+        setGuests(guestsList); // Set the state with fetched guest data
       } else {
         console.log("No guests found.");
       }
     } catch (error) {
       console.error("Error fetching guests:", error);
-      // Optionally, you can update loading or error state here
     }
-    setLoading(false);
+    setLoading(false); // Stop loading when data is fetched
   };
-  
 
   // Sorting function to sort guests based on the selected column and direction
   const sortedGuests = () => {
