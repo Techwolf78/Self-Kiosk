@@ -33,34 +33,36 @@ const AdminDashboard = () => {
   // Fetch guest data from your backend API (deployed on Render)
   const fetchGuests = async () => {
     try {
-      const response = await fetch("https://self-kiosk-backenddb.onrender.com/api/check-in");
+      const response = await fetch("https://self-kiosk-backenddb-1.onrender.com/api/check-in");
       
+      // Check if the response is not OK (e.g., 404 or 500)
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+  
+      // Try parsing the JSON
       const data = await response.json();
-      console.log('Fetched data:', data); // Add this for debugging
   
       if (data && data.guests) {
         const guestsList = data.guests.map((guest) => ({
           id: guest.id,
-          serialNumber: guest.serialNumber || '',
-          barcode: guest.barcode || '',
-          name: guest.name || '',
-          organization: guest.organization || 'N/A',
-          status: guest.status || 'Pending',
+          serialNumber: guest.serialNumber,
+          barcode: guest.barcode,
+          name: guest.name,
+          organization: guest.organization || "N/A",
+          status: guest.status || "Pending",
         }));
         setGuests(guestsList);
       } else {
         console.log("No guests found.");
-        setGuests([]);
       }
     } catch (error) {
       console.error("Error fetching guests:", error);
+      // Optionally, you can update loading or error state here
     }
     setLoading(false);
   };
+  
 
   // Sorting function to sort guests based on the selected column and direction
   const sortedGuests = () => {
@@ -140,7 +142,7 @@ const AdminDashboard = () => {
     let yPosition = 50;
     const lineHeight = 10; // Height of each row
     const maxY = 290; // Max Y position before needing a page break
-    const headerPrinted = false; // Flag to track if headers are printed
+
 
     // Function to print the table headers with black color
     const printHeaders = () => {
@@ -159,7 +161,7 @@ const AdminDashboard = () => {
     yPosition += lineHeight;
 
     // Table Data
-    filteredGuests.forEach((guest, index) => {
+    filteredGuests.forEach((guest) => {
       // Check if the content exceeds the page limit
       if (yPosition + lineHeight > maxY) {
         doc.addPage(); // Add a new page

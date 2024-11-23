@@ -40,23 +40,19 @@ const GateScanner = () => {
       setScannedData(barcode);
       setLoading(true);
       setModalMessage('Processing...');
-  
+
       try {
-        const response = await fetch('https://self-kiosk-backenddb.onrender.com/api/check-in', {
+        // Send a POST request to the backend API
+        const response = await fetch('https://self-kiosk-backenddb-1.onrender.com/api/check-in', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ barcode }),
+          body: JSON.stringify({ barcode }),  // Send barcode in the body
         });
-  
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-  
+
         const result = await response.json();
-        console.log('API Response:', result); // Add this for debugging
-  
+
         if (result.status === 'found') {
           const welcomeMessage = `Welcome ${result.name}`;
           setModalMessage(welcomeMessage);
@@ -69,7 +65,7 @@ const GateScanner = () => {
         setModalMessage("Error verifying guest. Please try again.");
       } finally {
         setLoading(false);
-        setShowScanner(false);
+        setShowScanner(false); // Close scanner after processing
       }
     }
   };
