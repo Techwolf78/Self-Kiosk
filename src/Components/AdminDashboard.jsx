@@ -33,27 +33,37 @@ const AdminDashboard = () => {
   // Fetch guest data from your backend API (deployed on Render)
   const fetchGuests = async () => {
     try {
+      console.log("Fetching guests from the API...");
       const response = await fetch("https://self-kiosk-backenddb.onrender.com/api/check-in"); // Replace with your Render API URL
-      const data = await response.json();
-
-      if (data && data.guests) {
-        const guestsList = data.guests.map((guest) => ({
-          id: guest.id,
-          serialNumber: guest.serialNumber,
-          barcode: guest.barcode,
-          name: guest.name,
-          organization: guest.organization || "N/A", // Default value for organization
-          status: guest.status || "Pending", // Default status if not set
-        }));
-        setGuests(guestsList); // Set the state with fetched guest data
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log("Guests data fetched:", data);
+        
+        if (data && data.guests) {
+          const guestsList = data.guests.map((guest) => ({
+            id: guest.id,
+            serialNumber: guest.serialNumber,
+            barcode: guest.barcode,
+            name: guest.name,
+            organization: guest.organization || "N/A", // Default value for organization
+            status: guest.status || "Pending", // Default status if not set
+          }));
+          setGuests(guestsList); // Set the state with fetched guest data
+        } else {
+          console.log("No guests found.");
+        }
       } else {
-        console.log("No guests found.");
+        // Log error response if not ok (e.g., 404 or 500)
+        const errorText = await response.text();
+        console.error("Failed to fetch guests. Response:", errorText); // Log the raw HTML error
       }
     } catch (error) {
-      console.error("Error fetching guests:", error);
+      console.error("Error fetching guests:", error); // More detailed error logging
     }
-    setLoading(false); // Stop loading when data is fetched
+    setLoading(false); // Stop loading when data is fetched or error occurs
   };
+  
 
   // Sorting function to sort guests based on the selected column and direction
   const sortedGuests = () => {
