@@ -18,7 +18,7 @@ const GateScanner = () => {
   const speakMessageOnce = (message) => {
     if (!window.speechSynthesis.speaking) {
       const speech = new SpeechSynthesisUtterance(message);
-      speech.lang = 'en-IN';
+      speech.lang = 'en-US';
       speech.pitch = 1;
       speech.rate = 0.7;
       speech.volume = 1;
@@ -122,7 +122,7 @@ const GateScanner = () => {
   };
 
   return (
-    <div className="min-h-screen bg-cover bg-center p-4 sm:p-8 relative" style={{ backgroundImage: "url('bg.jpg')" }}>
+    <div className="min-h-screen bg-cover bg-center p-4 sm:p-8 relative" style={{ backgroundImage: "url('sky.jpg')" }}>
       {/* Overlay */}
       <div className="absolute inset-0 bg-black opacity-30 z-0"></div>
   
