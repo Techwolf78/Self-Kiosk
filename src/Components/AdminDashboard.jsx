@@ -198,28 +198,28 @@ const AdminDashboard = () => {
   };
 
   return(
-    <div className="min-h-screen bg-gradient-to-r from-gray-800 via-gray-700 to-gray-600 p-4 sm:p-8">
+    <div className="min-h-screen  p-4 sm:p-8 bg-cover bg-center" style={{ backgroundImage: "url('bg.jpg')" }}>
       <h1 className="text-3xl sm:text-4xl font-bold text-white mb-6">
         Admin Dashboard
       </h1>
 
       <div className="flex flex-col sm:flex-row space-y-6 sm:space-y-0 sm:space-x-8">
         {/* Left side (Table) */}
-        <div className="w-full sm:w-7/12 bg-white p-6 sm:p-8 rounded-lg shadow-lg">
-          <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-4">
+        <div className="w-full sm:w-7/12 bg-transparent p-6 sm:p-8 rounded-lg shadow-lg  border-2 border-white backdrop-blur-md backdrop-brightness-75">
+          <h2 className="text-xl sm:text-2xl font-semibold text-white mb-4">
             Guest Attendance
           </h2>
 
           {/* Filter & Download PDF Button */}
           <div className="flex flex-col sm:flex-row items-center mb-4 space-y-4 sm:space-y-0 sm:space-x-4">
             <div className="flex items-center">
-              <label className="text-gray-800 font-semibold mr-4">
+              <label className="text-white font-semibold mr-4">
                 Filter by Status:{" "}
               </label>
               <select
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
-                className="p-2 border rounded-md bg-white"
+                className="p-2 border  bg-gray-900 text-white"
               >
                 <option value="All">All</option>
                 <option value="Arrived">Arrived</option>
@@ -229,7 +229,7 @@ const AdminDashboard = () => {
 
             <button
               onClick={downloadPDF}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-200"
+              className="px-4 py-2 bg-gray-900 border border-white text-white  hover:bg-white hover:text-blue-700 transition duration-200"
             >
               Download PDF
             </button>
@@ -241,10 +241,10 @@ const AdminDashboard = () => {
             <div className="overflow-x-auto">
               <table className="min-w-full table-auto border-separate border-spacing-2">
                 <thead>
-                  <tr className="bg-gray-200">
+                  <tr className="bg-gray-900">
                     <th
                       onClick={() => requestSort("serialNumber")}
-                      className="px-4 py-4 text-left text-gray-800 cursor-pointer"
+                      className="px-4 py-4 text-left text-white cursor-pointer"
                       style={{ width: "10%" }}
                     >
                       Serial Number
@@ -255,25 +255,25 @@ const AdminDashboard = () => {
                         : null}
                     </th>
                     <th
-                      className="px-6 py-4 text-left text-gray-800"
+                      className="px-6 py-4 text-left text-white"
                       style={{ width: "15%" }}
                     >
                       Barcode
                     </th>
                     <th
-                      className="px-6 py-4 text-left text-gray-800"
+                      className="px-6 py-4 text-left text-white"
                       style={{ width: "20%" }}
                     >
                       Name
                     </th>
                     <th
-                      className="px-6 py-4 text-left text-gray-800"
+                      className="px-6 py-4 text-left text-white"
                       style={{ width: "30%" }}
                     >
                       Organization
                     </th>
                     <th
-                      className="px-6 py-4 text-left text-gray-800"
+                      className="px-6 py-4 text-left text-white"
                       style={{ width: "15%" }}
                     >
                       Status
@@ -285,24 +285,24 @@ const AdminDashboard = () => {
                   {filteredGuests.map((guest) => (
                     <tr
                       key={guest.id}
-                      className="hover:bg-gray-50 transition duration-200"
+                      className="hover:bg-gray-900 transition duration-200"
                     >
-                      <td className="px-6 py-4 text-gray-700">
+                      <td className="px-6 py-4 text-white">
                         {guest.serialNumber}
                       </td>
-                      <td className="px-6 py-4 text-gray-700">
+                      <td className="px-6 py-4 text-white">
                         {guest.barcode}
                       </td>
-                      <td className="px-6 py-4 text-gray-700">{guest.name}</td>
-                      <td className="px-6 py-4 text-gray-700">
+                      <td className="px-6 py-4 text-white">{guest.name}</td>
+                      <td className="px-6 py-4 text-white">
                         {guest.organization}
                       </td>
                       <td className="px-6 py-4">
                         <span
                           className={`${
                             guest.status === "Arrived"
-                              ? "text-green-600"
-                              : "text-yellow-600"
+                              ? "text-green-300"
+                              : "text-yellow-300"
                           } font-semibold`}
                         >
                           {guest.status}
@@ -317,38 +317,66 @@ const AdminDashboard = () => {
         </div>
 
         {/* Right side (Statistics & Chart) */}
-        <div className="w-full sm:w-5/12 bg-white p-6 sm:p-8 rounded-lg shadow-lg">
-          <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-4">
+        <div className="w-full sm:w-5/12 bg-transparent border-2 border-white p-6 sm:p-8 rounded-lg shadow-lg">
+          <h2 className="text-xl sm:text-2xl font-semibold text-white mb-4">
             Guest Statistics
           </h2>
 
           {/* Statistics */}
           <div className="space-y-4">
-            <div className="text-lg font-semibold text-gray-700">
+            <div className="text-lg font-semibold text-white">
               Arrived Count:{" "}
-              <span className="text-green-600">{arrivedCount}</span>
+              <span className="text-green-300">{arrivedCount}</span>
             </div>
-            <div className="text-lg font-semibold text-gray-700">
+            <div className="text-lg font-semibold text-white">
               Pending Count:{" "}
-              <span className="text-yellow-600">{pendingCount}</span>
+              <span className="text-yellow-300">{pendingCount}</span>
             </div>
-            <div className="text-lg font-semibold text-gray-700">
+            <div className="text-lg font-semibold text-white">
               Total Count: <span className="text-blue-600">{totalCount}</span>
             </div>
           </div>
 
           {/* Bar Chart */}
           <div className="mt-6">
-            <Bar
-              data={chartData}
-              options={{
-                responsive: true,
-                plugins: {
-                  legend: { display: false },
-                  title: { display: true, text: "Guest Status Distribution" },
-                },
-              }}
-            />
+          <Bar
+  data={chartData}
+  options={{
+    responsive: true,
+    plugins: {
+      legend: {
+        display: false, // Hide the legend
+        labels: {
+          color: '#ffffff', // Color for the legend labels
+        },
+      },
+      title: {
+        display: true,
+        text: "Guest Status Distribution",
+        color: '#ffffff', // Color of the title text
+      },
+    },
+    scales: {
+      x: {
+        ticks: {
+          color: '#ffffff', // Color for x-axis labels
+        },
+        grid: {
+          color: '#7a7676', // Grid line color for x-axis
+        },
+      },
+      y: {
+        ticks: {
+          color: '#ffffff', // Color for y-axis labels
+        },
+        grid: {
+          color: '#7a7676', // Grid line color for y-axis
+        },
+      },
+    },
+  }}
+/>
+
           </div>
         </div>
       </div>
