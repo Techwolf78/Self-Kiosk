@@ -236,7 +236,7 @@ const AdminDashboard = () => {
           </div>
 
           {loading ? (
-            <div className="text-center text-lg">Loading...</div>
+            <div className="text-center text-lg text-white">Loading...</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full table-auto border-separate border-spacing-2">

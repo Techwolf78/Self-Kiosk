@@ -122,61 +122,78 @@ const GateScanner = () => {
   };
 
   return (
-    <div className="min-h-screen bg-cover bg-center p-4 sm:p-8" style={{ backgroundImage: "url('bg.jpg')" }}>
-      <div className="flex flex-col sm:flex-row items-center justify-between mb-8">
-        <div className="flex items-center justify-center sm:justify-start mb-4 sm:mb-0 w-full sm:w-auto">
+    <div className="min-h-screen bg-cover bg-center p-4 sm:p-8 relative" style={{ backgroundImage: "url('bg.jpg')" }}>
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-black opacity-30 z-0"></div>
+  
+      <div className="flex flex-col sm:flex-row items-center justify-between mb-2 z-10 relative">
+        <div className="flex items-center justify-center sm:justify-start sm:mb-0 w-full sm:w-auto">
           <img src="NewLogo.png" alt="Company Logo" className="w-36 h-18" />
         </div>
-
-        <button
-          onClick={openLoginModal}
-          className="bg-transparent border-2 border-white text-white py-1 md:py-3 px-2 md:px-8 text-base md:text-lg shadow-none hover:bg-white hover:text-blue-700 transition duration-300 transform hover:scale-105"
-        >
-          Admin Dashboard
-        </button>
       </div>
+  
+      <div className=" text-center z-10 relative">
+  <h1 className="text-white text-4xl md:text-5xl font-bold text-center mb-3">Synergy Sphere 2024</h1>
+  <p className="text-white text-3xl md:text-4xl font-semibold mb-6">Unison of Industry & Academia</p>
+  
+{/* Add banner image here */}
+<div className="mb-2 flex justify-center w-auto h-48">
+  <img 
+    src="logo.png" 
+    alt="Banner" 
+    className=" object-contain rounded-lg shadow-lg"
+  />
+</div>
 
-      <div className="mt-10 text-center">
-        <p className="text-5xl mb-6 text-white font-bold tracking-tight">Self Kiosk</p>
-        <p className="text-xl text-white mb-6">Scan the guest's barcode for access</p>
 
-        <button
-          onClick={startScan}
-          className="bg-transparent border-2 border-white text-white py-1 md:py-3 px-2 md:px-8 text-base md:text-lg font-semibold shadow-none hover:bg-white hover:text-blue-700 transition duration-300 transform hover:scale-105"
-        >
-          Start Scan
-        </button>
+  <p className="text-2xl md:text-3xl mb-6 text-white font-bold tracking-tight">Self Kiosk</p>
 
-        {showScanner && (
-          <div className="mt-8 max-w-full w-full mx-auto">
-            <QrScanner
-              delay={300}
-              style={{
-                width: '100%',
-                maxWidth: '800px',
-                height: '400px',
-                margin: '0 auto',
-                border: '2px solid #ddd',
-                borderRadius: '15px',
-                padding: '20px',
-                boxShadow: '0px 4px 20px rgba(0,0,0,0.1)',
-              }}
-              onScan={handleScan}
-              onError={handleError}
-            />
-            <button
-              onClick={stopScan}
-              className="bg-transparent border-2 border-white text-white py-1 md:py-3 px-2 md:px-8 mt-4 text-base md:text-lg font-semibold shadow-none hover:bg-white hover:text-blue-700 transition duration-300 transform hover:scale-105"
-            >
-              Close Scanner
-            </button>
-          </div>
-        )}
+  <button
+    onClick={startScan}
+    className="bg-transparent border-2 border-white text-white py-1 md:py-2 px-2 md:px-8 text-base md:text-lg font-semibold shadow-none hover:bg-white hover:text-blue-700 transition duration-300 transform hover:scale-105"
+  >
+    SCAN
+  </button>
+  <br />
+  <div className="mt-6 flex justify-center">
+    <button
+      onClick={openLoginModal}
+      className="bg-transparent border-2 border-white text-white py-1 md:py-3 px-2 md:px-8 text-base md:text-lg font-semibold shadow-none hover:bg-white hover:text-blue-700 transition duration-300 transform hover:scale-105 sm:hidden block"
+    >
+      Admin Dashboard
+    </button>
+  </div>
 
-      </div>
+  {showScanner && (
+    <div className="mt-8 max-w-full w-full mx-auto">
+      <QrScanner
+        delay={300}
+        style={{
+          width: '100%',
+          maxWidth: '800px',
+          height: '400px',
+          margin: '0 auto',
+          border: '2px solid #ddd',
+          borderRadius: '15px',
+          padding: '20px',
+          boxShadow: '0px 4px 20px rgba(0,0,0,0.1)',
+        }}
+        onScan={handleScan}
+        onError={handleError}
+      />
+      <button
+        onClick={stopScan}
+        className="bg-transparent border-2 border-white text-white py-1 md:py-3 px-2 md:px-8 mt-4 text-base md:text-lg font-semibold shadow-none hover:bg-white hover:text-blue-700 transition duration-300 transform hover:scale-105"
+      >
+        Close Scanner
+      </button>
+    </div>
+  )}
+</div>
 
+  
       {loading && <div className="mt-4 text-white">Processing...</div>}
-
+  
       {showLoginModal && (
         <div className="fixed inset-0 bg-blue-900 bg-opacity-60 flex justify-center items-center z-50">
           <div className="bg-transparent border-2 border-white p-8 w-full sm:w-96 text-center shadow-xl rounded-lg relative backdrop-blur-md backdrop-brightness-75">
@@ -188,9 +205,9 @@ const GateScanner = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
-
+  
             <h2 className="text-3xl font-semibold text-white mb-6">Admin Login</h2>
-
+  
             <form onSubmit={handleLogin}>
               <div className="mb-6">
                 <label htmlFor="username" className="block text-white">Username</label>
@@ -203,7 +220,7 @@ const GateScanner = () => {
                   required
                 />
               </div>
-
+  
               <div className="mb-6">
                 <label htmlFor="password" className="block text-white">Password</label>
                 <input
@@ -215,13 +232,13 @@ const GateScanner = () => {
                   required
                 />
               </div>
-
+  
               {loginError && (
                 <div className="mb-4 text-red-500 text-center">
                   {loginError}
                 </div>
               )}
-
+  
               <button
                 type="submit"
                 className="w-full bg-transparent border-2 border-white text-white py-3 text-lg hover:bg-white hover:text-blue-600 transition duration-300"
@@ -232,10 +249,10 @@ const GateScanner = () => {
           </div>
         </div>
       )}
-
+  
       {modalMessage && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50">
-          <div className="bg-transparent p-8  text-center shadow-xl border-2 border-white text-white backdrop-blur-md backdrop-brightness-75">
+          <div className="bg-transparent p-8 text-center shadow-xl border-2 border-white text-white backdrop-blur-md backdrop-brightness-75">
             <p className="text-xl font-semibold">{modalMessage}</p>
             <button
               onClick={() => setModalMessage("")}
@@ -248,6 +265,7 @@ const GateScanner = () => {
       )}
     </div>
   );
+  
 };
 
 export default GateScanner;
