@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import QrScanner from 'react-qr-scanner';
 import { useNavigate } from 'react-router-dom';
 
+
 const GateScanner = () => {
   const [scannedData, setScannedData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -93,7 +94,8 @@ const GateScanner = () => {
     const newTimer = setTimeout(() => {
       setModalMessage("Scanner closed due to inactivity.");
       setShowScanner(false); // Automatically close scanner after 5 minutes
-    }, 30000); // 5 minutes
+    }, 300000); // 5 minutes
+    
 
     setTimer(newTimer); // Store the timer
   };
@@ -122,19 +124,19 @@ const GateScanner = () => {
   };
 
   return (
-    <div className="min-h-screen bg-cover bg-center p-4 sm:p-8 relative" style={{ backgroundImage: "url('sky.jpg')" }}>
+    <div className="min-h-screen bg-cover bg-center p-2 md:p-4 relative" style={{ backgroundImage: "url('sky.jpg')" }}>
       {/* Overlay */}
       <div className="absolute inset-0 bg-black opacity-30 z-0"></div>
   
-      <div className="flex flex-col sm:flex-row items-center justify-between mb-2 z-10 relative">
-        <div className="flex items-center justify-center sm:justify-start sm:mb-0 w-full sm:w-auto">
+      <div className="flex flex-col  items-center justify-between mb-2 z-10 relative">
+        <div className="flex items-center justify-center  sm:mb-0 w-full sm:w-auto">
           <img src="NewLogo.png" alt="Company Logo" className="w-36 h-18" />
         </div>
       </div>
   
       <div className=" text-center z-10 relative">
   <h1 className="text-white text-4xl md:text-5xl font-bold text-center mb-3">Synergy Sphere 2024</h1>
-  <p className="text-white text-3xl md:text-4xl font-semibold mb-6">Unison of Industry & Academia</p>
+  <p className="text-white text-3xl md:text-4xl font-light mb-6 cookie-regular ">Unison of Industry & Academia</p>
   
 {/* Add banner image here */}
 <div className="mb-2 flex justify-center w-auto h-48">
