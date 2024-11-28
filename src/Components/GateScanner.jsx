@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import QrScanner from 'react-qr-scanner';
 import { useNavigate } from 'react-router-dom';
 
+/* global responsiveVoice */
+
 const GateScanner = () => {
   const [scannedData, setScannedData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -17,27 +19,27 @@ const GateScanner = () => {
 
   // Function to speak the message once and close the modal after 1 second
   const speakMessageOnce = (message) => {
-    if (!window.speechSynthesis.speaking) {
-      const speech = new SpeechSynthesisUtterance(message);
-      speech.lang = 'en-US';
-      speech.pitch = 1;
-      speech.rate = 1;
-      speech.volume = 1;
-  
-      speech.onend = () => {
+    if (typeof responsiveVoice !== "undefined") {
+      // Use ResponsiveVoice API to speak the message
+      responsiveVoice.speak(message, "Hindi Male", {
+        pitch: 1,
+        rate: 1,
+        volume: 1,
+      });
+
+      // Handle after speech ends
+      responsiveVoice.onend = () => {
         setTimeout(() => {
           setModalMessage("");  // Clears the message after 200ms
-          // Open scanner automatically after another 2000ms
+          // Open scanner automatically after another 300ms
           setTimeout(() => {
             startScan(); // Open the scanner automatically
-          }, 300); // Delay of 2000ms (2 seconds)
+          }, 300); // Delay of 300ms (0.3 seconds)
         }, 200); // Clears modalMessage after 200ms
       };
-  
-      window.speechSynthesis.speak(speech);
     }
   };
-  
+
   const handleScan = async (data) => {
     if (data && !isScanning) {  // Only process if not already scanning
       const barcode = data.text;
@@ -45,7 +47,7 @@ const GateScanner = () => {
       setIsScanning(true); // Set scanning state to true
       setLoading(true);
       setModalMessage('Processing...');
-  
+
       try {
         const response = await fetch('https://self-kiosk-backenddb.onrender.com/api/check-in', {
           method: 'POST',
@@ -54,9 +56,9 @@ const GateScanner = () => {
           },
           body: JSON.stringify({ barcode }),  
         });
-  
+
         const result = await response.json();
-  
+
         if (result.status === 'found') {
           const welcomeMessage = `Welcome ${result.name}`;
           setModalMessage(welcomeMessage);
@@ -74,7 +76,6 @@ const GateScanner = () => {
       }
     }
   };
-  
 
   const handleError = (err) => {
     console.error("Error scanning barcode:", err);
@@ -133,7 +134,7 @@ const GateScanner = () => {
     <div className="min-h-screen bg-cover bg-center p-2 md:p-4 relative" style={{ backgroundImage: "url('sky.jpg')" }}>
       {/* Overlay */}
       <div className="absolute inset-0 bg-black opacity-30 z-0"></div>
-  
+
       <div className="flex flex-col items-center justify-between mb-2 z-10 relative">
         <div className="flex items-center justify-center sm:mb-0 w-full sm:w-auto">
           <img src="NewLogo.png" alt="Company Logo" className="w-36 h-18" />
@@ -143,7 +144,7 @@ const GateScanner = () => {
       <div className="text-center z-10 relative">
         <h1 className="text-white text-4xl md:text-5xl font-bold text-center mb-3">Synergy Sphere 2024</h1>
         <p className="text-white text-3xl md:text-4xl font-light mb-6 cookie-regular">Unison of Industry & Academia</p>
-  
+
         <div className="mb-2 flex justify-center w-auto h-48">
           <img src="logo.png" alt="Banner" className="object-contain rounded-lg shadow-lg"/>
         </div>
