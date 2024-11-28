@@ -62,7 +62,7 @@ const GateScanner = () => {
           setModalMessage(welcomeMessage);
           speakMessageOnce(`Welcome to Synergy Sphere ${result.name}`);
         } else {
-          setModalMessage("Barcode not found. Access Denied.");
+          setModalMessage("Barcode not found. Contact Admin.");
         }
       } catch (error) {
         console.error("Error verifying guest:", error);
