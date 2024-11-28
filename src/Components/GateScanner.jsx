@@ -19,7 +19,7 @@ const GateScanner = () => {
   const speakMessageOnce = (message) => {
     if (!window.speechSynthesis.speaking) {
       const speech = new SpeechSynthesisUtterance(message);
-      speech.lang = 'en-IN';
+      speech.lang = 'en-US';
       speech.pitch = 1;
       speech.rate = 1;
       speech.volume = 1;
