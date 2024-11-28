@@ -143,7 +143,7 @@ const GateScanner = () => {
 
       <div className="text-center z-10 relative">
         <h1 className="text-white text-4xl md:text-5xl font-bold text-center mb-3">Synergy Sphere 2024</h1>
-        <p className="text-white text-3xl md:text-4xl font-light mb-6 cookie-regular">Unison of Industry & Academia</p>
+        <p className="text-white text-3xl md:text-4xl font-light mb-6 cookie-regular">"Unison of Industry & Academia"</p>
 
         <div className="mb-2 flex justify-center w-auto h-48">
           <img src="logo.png" alt="Banner" className="object-contain rounded-lg shadow-lg"/>
