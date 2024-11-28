@@ -152,7 +152,7 @@ const GateScanner = () => {
 
         <button
           onClick={startScan}
-          className="bg-transparent border-2 border-white text-white py-1 md:py-2 px-2 md:px-8 text-base md:text-lg font-semibold shadow-none hover:bg-white hover:text-blue-700 transition duration-300 transform hover:scale-105"
+          className="bg-transparent border-2 border-white text-white p-1 px-8 text-base md:text-lg font-semibold shadow-none hover:bg-white hover:text-blue-700 transition duration-300 transform hover:scale-105"
         >
           SCAN
         </button>
