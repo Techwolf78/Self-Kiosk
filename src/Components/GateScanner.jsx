@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import QrScanner from 'react-qr-scanner';
 import { useNavigate } from 'react-router-dom';
+import { toast, ToastContainer } from 'react-toastify';  // Import toastify
+import 'react-toastify/dist/ReactToastify.css';  // Import toastify CSS
 
 /* global responsiveVoice */
 
@@ -63,6 +65,19 @@ const GateScanner = () => {
           const welcomeMessage = `Welcome ${result.name}`;
           setModalMessage(welcomeMessage);
           speakMessageOnce(`Welcome to Synergy Sphere ${result.name}`);
+
+          // Get current time in IST
+          const date = new Date();
+          const options = { timeZone: 'Asia/Kolkata', hour12: false };
+          const arrivalTime = date.toLocaleString('en-IN', options);
+
+          // Show toast notification with name and arrival time
+          toast.success(`Welcome ${result.name}, Arrived at ${arrivalTime}`, {
+            position: 'top-right', // Or use 'top-center', 'bottom-left', etc.
+            autoClose: 5000,
+            hideProgressBar: true,
+          });
+          
         } else {
           setModalMessage("Barcode not found. Contact Admin.");
         }
@@ -143,13 +158,11 @@ const GateScanner = () => {
 
       <div className="text-center z-10 relative">
         <h1 className="text-white text-4xl md:text-5xl font-bold text-center mb-3">Synergy Sphere 2024</h1>
-        <p className="text-white text-3xl md:text-4xl font-light mb-6 cookie-regular">"Unison of Industry & Academia"</p>
+        <p className="text-white text-3xl md:text-4xl font-light mb-6 cookie-regular">&quot;Unison of Industry & Academia&quot;</p>
 
         <div className="mb-2 flex justify-center w-auto h-48">
           <img src="logo.png" alt="Banner" className="object-contain rounded-lg shadow-lg"/>
         </div>
-
-        <p className="text-2xl md:text-3xl mb-6 text-white font-bold tracking-tight">Self Kiosk</p>
 
         <button
           onClick={startScan}
@@ -168,7 +181,7 @@ const GateScanner = () => {
         </div>
 
         {showScanner && (
-          <div className="mt-8 max-w-full w-full mx-auto">
+          <div className=" max-w-full w-full mx-auto">
             <QrScanner
               delay={300}
               style={{
@@ -265,6 +278,8 @@ const GateScanner = () => {
           </div>
         </div>
       )}
+
+      <ToastContainer /> {/* Add this to render the toast notifications */}
     </div>
   );
 };

@@ -34,12 +34,14 @@ const AdminDashboard = () => {
   const fetchGuests = async () => {
     try {
       console.log("Fetching guests from the API...");
-      const response = await fetch("https://self-kiosk-backenddb.onrender.com/api/check-in"); // Replace with your Render API URL
-      
+      const response = await fetch(
+        "https://self-kiosk-backenddb.onrender.com/api/check-in"
+      ); // Replace with your Render API URL
+
       if (response.ok) {
         const data = await response.json();
         console.log("Guests data fetched:", data);
-        
+
         if (data && data.guests) {
           const guestsList = data.guests.map((guest) => ({
             id: guest.id,
@@ -48,6 +50,7 @@ const AdminDashboard = () => {
             name: guest.name,
             organization: guest.organization || "N/A", // Default value for organization
             status: guest.status || "Pending", // Default status if not set
+            arrivalTime: guest.arrivalTime,
           }));
           setGuests(guestsList); // Set the state with fetched guest data
         } else {
@@ -63,7 +66,6 @@ const AdminDashboard = () => {
     }
     setLoading(false); // Stop loading when data is fetched or error occurs
   };
-  
 
   // Sorting function to sort guests based on the selected column and direction
   const sortedGuests = () => {
@@ -99,37 +101,9 @@ const AdminDashboard = () => {
     return guest.status === filter;
   });
 
-  // Count the different statuses for filtered guests
-  const countStatuses = () => {
-    const arrivedCount = filteredGuests.filter(
-      (guest) => guest.status === "Arrived"
-    ).length;
-    const pendingCount = filteredGuests.filter(
-      (guest) => guest.status === "Pending"
-    ).length;
-    const totalCount = filteredGuests.length;
-    return { arrivedCount, pendingCount, totalCount };
-  };
-
   useEffect(() => {
     fetchGuests(); // Call function to fetch guest data
   }, []);
-
-  const { arrivedCount, pendingCount, totalCount } = countStatuses();
-
-  // Chart data
-  const chartData = {
-    labels: ["Arrived", "Pending"],
-    datasets: [
-      {
-        label: "Guest Status Count",
-        data: [arrivedCount, pendingCount],
-        backgroundColor: ["#34D399", "#FBBF24"], // Green for arrived, Yellow for pending
-        borderColor: ["#10B981", "#F59E0B"],
-        borderWidth: 1,
-      },
-    ],
-  };
 
   // Function to export guest data to PDF
   const downloadPDF = () => {
@@ -144,15 +118,15 @@ const AdminDashboard = () => {
     const lineHeight = 10; // Height of each row
     const maxY = 290; // Max Y position before needing a page break
 
-
     // Function to print the table headers with black color
     const printHeaders = () => {
       doc.setFontSize(12);
       doc.setTextColor(0, 0, 0); // Ensure header text is always black
-      doc.text("Serial Number", 14, yPosition); // Adjusted position for Serial Number
+      doc.text("Sr. No.", 14, yPosition); // Adjusted position for Serial Number
       doc.text("Name", 50, yPosition); // Adjusted position for Name
       doc.text("Organization", 110, yPosition); // Adjusted position for Organization
       doc.text("Status", 180, yPosition); // Status column on the right
+      doc.text("Arrival Time", 210, yPosition); // Arrival Time column on the right
     };
 
     // Print headers for the first page
@@ -175,9 +149,10 @@ const AdminDashboard = () => {
 
       // Add guest data with adjusted column widths
       doc.setTextColor(0, 0, 0); // Default color (black) for all text except status
-      doc.text(guest.serialNumber.toString(), 14, yPosition); // Adjusted Serial Number position
-      doc.text(guest.name, 50, yPosition); // Adjusted Name position
-      doc.text(guest.organization, 110, yPosition); // Adjusted Organization position
+      doc.text(guest.serialNumber.toString(), 10, yPosition); // Adjusted Serial Number position
+      doc.text(guest.name, 30, yPosition); // Adjusted Name position
+      doc.text(guest.organization, 80, yPosition); // Adjusted Organization position
+      
 
       // Set color and text for the Status column
       if (guest.status === "Arrived") {
@@ -187,7 +162,8 @@ const AdminDashboard = () => {
       } else {
         doc.setTextColor(0, 0, 0); // Default black color for other statuses
       }
-      doc.text(guest.status, 180, yPosition); // Status column with color
+      doc.text(guest.status, 145, yPosition); // Status column with color
+      doc.text(guest.arrivalTime, 161, yPosition); // Arrival Time column
 
       // Move yPosition down for the next row
       yPosition += lineHeight;
@@ -197,15 +173,18 @@ const AdminDashboard = () => {
     doc.save("guest_data.pdf");
   };
 
-  return(
-    <div className="min-h-screen  p-4 sm:p-8 bg-cover bg-center" style={{ backgroundImage: "url('bg.jpg')" }}>
+  return (
+    <div
+      className="min-h-screen  p-4 sm:p-8 bg-cover bg-center"
+      style={{ backgroundImage: "url('bg.jpg')" }}
+    >
       <h1 className="text-3xl sm:text-4xl font-bold text-white mb-6">
         Admin Dashboard
       </h1>
 
       <div className="flex flex-col sm:flex-row space-y-6 sm:space-y-0 sm:space-x-8">
         {/* Left side (Table) */}
-        <div className="w-full sm:w-7/12 bg-transparent p-6 sm:p-8 rounded-lg shadow-lg  border-2 border-white backdrop-blur-md backdrop-brightness-75">
+        <div className="w-full  bg-transparent p-6 sm:p-8 rounded-lg shadow-lg  border-2 border-white backdrop-blur-md backdrop-brightness-75">
           <h2 className="text-xl sm:text-2xl font-semibold text-white mb-4">
             Guest Attendance
           </h2>
@@ -278,6 +257,12 @@ const AdminDashboard = () => {
                     >
                       Status
                     </th>
+                    <th
+                      className="px-6 py-4 text-left text-white"
+                      style={{ width: "20%" }}
+                    >
+                      Arrival Time
+                    </th>
                   </tr>
                 </thead>
 
@@ -290,9 +275,7 @@ const AdminDashboard = () => {
                       <td className="px-6 py-4 text-white">
                         {guest.serialNumber}
                       </td>
-                      <td className="px-6 py-4 text-white">
-                        {guest.barcode}
-                      </td>
+                      <td className="px-6 py-4 text-white">{guest.barcode}</td>
                       <td className="px-6 py-4 text-white">{guest.name}</td>
                       <td className="px-6 py-4 text-white">
                         {guest.organization}
@@ -308,76 +291,13 @@ const AdminDashboard = () => {
                           {guest.status}
                         </span>
                       </td>
+                      <td className="px-6 py-4 text-white">{guest.arrivalTime}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           )}
-        </div>
-
-        {/* Right side (Statistics & Chart) */}
-        <div className="w-full sm:w-5/12 bg-transparent border-2 border-white p-6 sm:p-8 rounded-lg shadow-lg">
-          <h2 className="text-xl sm:text-2xl font-semibold text-white mb-4">
-            Guest Statistics
-          </h2>
-
-          {/* Statistics */}
-          <div className="space-y-4">
-            <div className="text-lg font-semibold text-white">
-              Arrived Count:{" "}
-              <span className="text-green-300">{arrivedCount}</span>
-            </div>
-            <div className="text-lg font-semibold text-white">
-              Pending Count:{" "}
-              <span className="text-yellow-300">{pendingCount}</span>
-            </div>
-            <div className="text-lg font-semibold text-white">
-              Total Count: <span className="text-blue-600">{totalCount}</span>
-            </div>
-          </div>
-
-          {/* Bar Chart */}
-          <div className="mt-6">
-          <Bar
-  data={chartData}
-  options={{
-    responsive: true,
-    plugins: {
-      legend: {
-        display: false, // Hide the legend
-        labels: {
-          color: '#ffffff', // Color for the legend labels
-        },
-      },
-      title: {
-        display: true,
-        text: "Guest Status Distribution",
-        color: '#ffffff', // Color of the title text
-      },
-    },
-    scales: {
-      x: {
-        ticks: {
-          color: '#ffffff', // Color for x-axis labels
-        },
-        grid: {
-          color: '#7a7676', // Grid line color for x-axis
-        },
-      },
-      y: {
-        ticks: {
-          color: '#ffffff', // Color for y-axis labels
-        },
-        grid: {
-          color: '#7a7676', // Grid line color for y-axis
-        },
-      },
-    },
-  }}
-/>
-
-          </div>
         </div>
       </div>
     </div>
