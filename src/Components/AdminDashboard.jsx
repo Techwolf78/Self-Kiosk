@@ -122,11 +122,11 @@ const AdminDashboard = () => {
     const printHeaders = () => {
       doc.setFontSize(12);
       doc.setTextColor(0, 0, 0); // Ensure header text is always black
-      doc.text("Sr. No.", 14, yPosition); // Adjusted position for Serial Number
-      doc.text("Name", 50, yPosition); // Adjusted position for Name
-      doc.text("Organization", 110, yPosition); // Adjusted position for Organization
-      doc.text("Status", 180, yPosition); // Status column on the right
-      doc.text("Arrival Time", 210, yPosition); // Arrival Time column on the right
+      doc.text("Sr. No.", 2, yPosition); // Adjusted position for Serial Number
+      doc.text("Name", 30, yPosition); // Adjusted position for Name
+      doc.text("Organization", 80, yPosition); // Adjusted position for Organization
+      doc.text("Status", 145, yPosition); // Status column on the right
+      doc.text("Arrival Time", 170, yPosition); // Arrival Time column on the right
     };
 
     // Print headers for the first page
@@ -149,8 +149,8 @@ const AdminDashboard = () => {
 
       // Add guest data with adjusted column widths
       doc.setTextColor(0, 0, 0); // Default color (black) for all text except status
-      doc.text(guest.serialNumber.toString(), 10, yPosition); // Adjusted Serial Number position
-      doc.text(guest.name, 30, yPosition); // Adjusted Name position
+      doc.text(guest.serialNumber.toString(), 5, yPosition); // Adjusted Serial Number position
+      doc.text(guest.name, 18, yPosition); // Adjusted Name position
       doc.text(guest.organization, 80, yPosition); // Adjusted Organization position
       
 
@@ -163,7 +163,7 @@ const AdminDashboard = () => {
         doc.setTextColor(0, 0, 0); // Default black color for other statuses
       }
       doc.text(guest.status, 145, yPosition); // Status column with color
-      doc.text(guest.arrivalTime, 161, yPosition); // Arrival Time column
+      doc.text(guest.arrivalTime, 165, yPosition); // Arrival Time column
 
       // Move yPosition down for the next row
       yPosition += lineHeight;
