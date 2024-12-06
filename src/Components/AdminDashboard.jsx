@@ -174,10 +174,12 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div
-      className="min-h-screen  p-4 sm:p-8 bg-cover bg-center"
-      style={{ backgroundImage: "url('bg.jpg')" }}
-    >
+<div
+  className="min-h-screen p-4 sm:p-8"
+  style={{
+    background: 'linear-gradient(#45277D, #45277D)',
+  }}
+>
       <h1 className="text-3xl sm:text-4xl font-bold text-white mb-6">
         Admin Dashboard
       </h1>
