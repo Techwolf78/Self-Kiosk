@@ -5,7 +5,6 @@ import { toast, ToastContainer } from 'react-toastify';  // Import toastify
 import 'react-toastify/dist/ReactToastify.css';  // Import toastify CSS
 
 /* global responsiveVoice */
-
 const GateScanner = () => {
   const [scannedData, setScannedData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -15,8 +14,9 @@ const GateScanner = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
-  const [timer, setTimer] = useState(null); // Timer state to track inactivity
-  const [isScanning, setIsScanning] = useState(false); // Track scanning state
+  const [timer, setTimer] = useState(null);
+  const [isScanning, setIsScanning] = useState(false);
+  const [camera, setCamera] = useState('environment');  // Track camera type ('environment' for back, 'user' for front)
   const navigate = useNavigate();
 
   // Function to speak the message once and close the modal after 1 second
@@ -126,6 +126,11 @@ const GateScanner = () => {
     setShowLoginModal(true);
   };
 
+  // Switch camera between front and back
+  const switchCamera = () => {
+    setCamera(prevCamera => prevCamera === 'environment' ? 'user' : 'environment');
+  };
+
   const closeLoginModal = () => {
     setShowLoginModal(false);
     setUsername('');
@@ -165,11 +170,18 @@ const GateScanner = () => {
         </div>
 
         <button
-          onClick={startScan}
-          className="bg-transparent border-2 border-white text-white p-1 px-8 text-base md:text-lg font-semibold shadow-none hover:bg-white hover:text-blue-700 transition duration-300 transform hover:scale-105"
-        >
-          SCAN
-        </button>
+            onClick={startScan}
+            className="bg-transparent border-2 border-white text-white p-1 px-8 text-base md:text-lg font-semibold shadow-none hover:bg-white hover:text-blue-700 transition duration-300 transform hover:scale-105"
+          >
+            SCAN
+          </button>
+          
+          <button
+            onClick={switchCamera}
+            className="bg-transparent border-2 border-white text-white p-1 px-8 text-base md:text-lg font-semibold shadow-none hover:bg-white hover:text-blue-700 transition duration-300 transform hover:scale-105"
+          >
+            Switch Camera
+          </button>
         <br />
         <div className="mt-6 flex justify-center">
           <button
