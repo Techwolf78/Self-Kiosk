@@ -56,12 +56,11 @@ const AdminDashboard = () => {
           console.log("No guests found.");
         }
       } else {
-        // Log error response if not ok (e.g., 404 or 500)
         const errorText = await response.text();
-        console.error("Failed to fetch guests. Response:", errorText); // Log the raw HTML error
+        console.error("Failed to fetch guests. Response:", errorText); 
       }
     } catch (error) {
-      console.error("Error fetching guests:", error); // More detailed error logging
+      console.error("Error fetching guests:", error);
     }
     setLoading(false); // Stop loading when data is fetched or error occurs
   };
@@ -100,6 +99,11 @@ const AdminDashboard = () => {
     return guest.status === filter;
   });
 
+  // Calculate stats
+  const totalGuests = filteredGuests.length;
+  const arrivedGuests = filteredGuests.filter(guest => guest.status === "Arrived").length;
+  const pendingGuests = totalGuests - arrivedGuests; // Calculate Pending as Total - Arrived
+
   useEffect(() => {
     fetchGuests(); // Call function to fetch guest data
   }, []);
@@ -111,6 +115,12 @@ const AdminDashboard = () => {
     // Set title and styling
     doc.setFontSize(20);
     doc.text("Guest Attendance Report", 14, 22);
+
+    // Add stats to PDF
+    doc.setFontSize(12);
+    doc.text(`Total Guests: ${totalGuests}`, 14, 30);
+    doc.text(`Arrived Guests: ${arrivedGuests}`, 14, 36);
+    doc.text(`Pending Guests: ${pendingGuests}`, 14, 42);
 
     // Table Data
     let yPosition = 50;
@@ -151,7 +161,6 @@ const AdminDashboard = () => {
       doc.text(guest.serialNumber.toString(), 5, yPosition); // Adjusted Serial Number position
       doc.text(guest.name, 18, yPosition); // Adjusted Name position
       doc.text(guest.organization, 80, yPosition); // Adjusted Organization position
-      
 
       // Set color and text for the Status column
       if (guest.status === "Arrived") {
@@ -173,12 +182,12 @@ const AdminDashboard = () => {
   };
 
   return (
-<div
-  className="min-h-screen p-4 sm:p-8"
-  style={{
-    background: 'linear-gradient(#45277D, #45277D)',
-  }}
->
+    <div
+      className="min-h-screen p-4 sm:p-8"
+      style={{
+        background: 'linear-gradient(#45277D, #45277D)',
+      }}
+    >
       <h1 className="text-3xl sm:text-4xl font-bold text-white mb-6">
         Admin Dashboard
       </h1>
@@ -189,6 +198,13 @@ const AdminDashboard = () => {
           <h2 className="text-xl sm:text-2xl font-semibold text-white mb-4">
             Guest Attendance
           </h2>
+
+          {/* Stats Section */}
+          <div className="mb-4 text-white">
+            <div>Total Guests: {totalGuests}</div>
+            <div>Arrived Guests: {arrivedGuests}</div>
+            <div>Pending Guests: {pendingGuests}</div>
+          </div>
 
           {/* Filter & Download PDF Button */}
           <div className="flex flex-col sm:flex-row items-center mb-4 space-y-4 sm:space-y-0 sm:space-x-4">

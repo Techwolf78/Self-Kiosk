@@ -19,6 +19,11 @@ const GateScanner = () => {
   const [camera, setCamera] = useState('environment');  // Track camera type ('environment' for back, 'user' for front)
   const navigate = useNavigate();
 
+  const predefinedGuests = [
+    { barcode: '1234567890', name: 'Mr Suvarnanidhi Rao' },
+    { barcode: '3456789012', name: 'Mr Ramchandra Honap' }
+  ];
+  
   // Function to speak the message once and close the modal after 1 second
   const speakMessageOnce = (message) => {
     if (typeof responsiveVoice !== "undefined") {
@@ -44,43 +49,74 @@ const GateScanner = () => {
 
   const handleScan = async (data) => {
     if (data && !isScanning) {  // Only process if not already scanning
-      const barcode = data.text;
+      // Trim any extra spaces from the scanned barcode
+      const barcode = data.text.trim();  
+      
+      // Log the scanned barcode to the console
+      console.log('Scanned Barcode:', barcode);  // This prints the barcode to the console
+  
       setScannedData(barcode);
       setIsScanning(true); // Set scanning state to true
       setLoading(true);
       setModalMessage('Processing...');
-
+    
       try {
+        // First, try to fetch from the backend
         const response = await fetch('https://self-kiosk-backenddb.onrender.com/api/check-in', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ barcode }),  
+          body: JSON.stringify({ barcode }),
         });
-
+    
         const result = await response.json();
-
+        console.log('Backend result:', result);  // Check what response is coming from backend
+    
         if (result.status === 'found') {
           const welcomeMessage = `Welcome ${result.name}`;
           setModalMessage(welcomeMessage);
           speakMessageOnce(`Welcome to Synergy Sphere ${result.name}`);
-
+    
           // Get current time in IST
           const date = new Date();
           const options = { timeZone: 'Asia/Kolkata', hour12: false };
           const arrivalTime = date.toLocaleString('en-IN', options);
-
+    
           // Show toast notification with name and arrival time
           toast.success(`Welcome ${result.name}, Arrived at ${arrivalTime}`, {
-            position: 'top-right', // Or use 'top-center', 'bottom-left', etc.
+            position: 'top-right',
             autoClose: 5000,
             hideProgressBar: true,
           });
-          
+    
         } else {
-          setModalMessage("Barcode not found. Contact Admin.");
+          // If not found in the backend, check against predefined guest array
+          const guest = predefinedGuests.find(g => g.barcode.trim() === barcode.trim());
+          console.log('Predefined Guest:', guest);  // Check if it finds the correct guest
+          
+          if (guest) {
+            const welcomeMessage = `Welcome ${guest.name}`;
+            setModalMessage(welcomeMessage);
+            speakMessageOnce(`Welcome to Synergy Sphere ${guest.name}`);
+              
+            // Get current time in IST
+            const date = new Date();
+            const options = { timeZone: 'Asia/Kolkata', hour12: false };
+            const arrivalTime = date.toLocaleString('en-IN', options);
+    
+            // Show toast notification with name and arrival time
+            toast.success(`Welcome ${guest.name}, Arrived at ${arrivalTime}`, {
+              position: 'top-right',
+              autoClose: 5000,
+              hideProgressBar: true,
+            });
+    
+          } else {
+            setModalMessage("Barcode not found. Contact Admin.");
+          }
         }
+    
       } catch (error) {
         console.error("Error verifying guest:", error);
         setModalMessage("Error verifying guest. Please try again.");
@@ -91,7 +127,7 @@ const GateScanner = () => {
       }
     }
   };
-
+  
   const handleError = (err) => {
     console.error("Error scanning barcode:", err);
     setModalMessage("Error scanning barcode. Please try again.");
@@ -171,14 +207,14 @@ const GateScanner = () => {
 
         <button
             onClick={startScan}
-            className="bg-transparent border-2 border-white text-white p-1 px-8 text-base md:text-lg font-semibold shadow-none hover:bg-white hover:text-blue-700 transition duration-300 transform hover:scale-105"
+            className="bg-transparent border-2 border-white text-white p-1 px-8 text-base md:text-lg font-semibold shadow-none hover:bg-white hover:text-blue-700 transition duration-300 transform hover:scale-105 mx-4 my-1"
           >
             SCAN
           </button>
           
           <button
             onClick={switchCamera}
-            className="bg-transparent border-2 border-white text-white p-1 px-8 text-base md:text-lg font-semibold shadow-none hover:bg-white hover:text-blue-700 transition duration-300 transform hover:scale-105"
+            className="bg-transparent border-2 border-white text-white p-1 px-8 text-base md:text-lg font-semibold shadow-none hover:bg-white hover:text-blue-700 transition duration-300 transform hover:scale-105 mx-4 my-1"
           >
             Switch Camera
           </button>
@@ -196,6 +232,7 @@ const GateScanner = () => {
           <div className=" max-w-full w-full mx-auto">
             <QrScanner
               delay={300}
+              facingMode={camera} // Pass the camera state to the QrScanner component
               style={{
                 width: '100%',
                 maxWidth: '800px',
@@ -209,6 +246,7 @@ const GateScanner = () => {
               onScan={handleScan}
               onError={handleError}
             />
+
             <button
               onClick={stopScan}
               className="bg-transparent border-2 border-white text-white py-1 md:py-3 px-2 md:px-8 mt-4 text-base md:text-lg font-semibold shadow-none hover:bg-white hover:text-blue-700 transition duration-300 transform hover:scale-105"
