@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
-import QrScanner from 'react-qr-scanner';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';  // Import toastify
 import 'react-toastify/dist/ReactToastify.css';  // Import toastify CSS
+import QrScanner from 'react-qr-scanner';
 
 /* global responsiveVoice */
 const GateScanner = () => {
@@ -17,6 +17,8 @@ const GateScanner = () => {
   const [timer, setTimer] = useState(null);
   const [isScanning, setIsScanning] = useState(false);
   const [camera, setCamera] = useState('environment');  // Track camera type ('environment' for back, 'user' for front)
+  const [stream, setStream] = useState(null);  // Store the media stream
+  const videoRef = useRef(null);  // Ref for the video element
   const navigate = useNavigate();
 
   const predefinedGuests = [
@@ -186,8 +188,62 @@ const GateScanner = () => {
     }
   };
 
+  useEffect(() => {
+    if (showScanner) {
+      // Get the media stream when the scanner is shown
+      initializeCamera(camera);
+    } else {
+      // Stop the stream when scanner is hidden
+      stopCamera();
+    }
+
+    return () => {
+      // Clean up on component unmount
+      stopCamera();
+    };
+  }, [showScanner, camera]);
+
+  const initializeCamera = async (cameraType) => {
+    try {
+      // Get the list of devices
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      
+      // Find the device ID for the selected camera (user/front or environment/back)
+      const cameraDevice = devices.find(device => device.kind === 'videoinput' && device.label.toLowerCase().includes(cameraType));
+
+      if (cameraDevice) {
+        // Get user media stream for the selected camera
+        const newStream = await navigator.mediaDevices.getUserMedia({
+          video: { deviceId: cameraDevice.deviceId }
+        });
+
+        // Stop previous stream if it exists
+        if (stream) {
+          stream.getTracks().forEach(track => track.stop());
+        }
+
+        // Set the new stream to the video element
+        if (videoRef.current) {
+          videoRef.current.srcObject = newStream;
+        }
+
+        setStream(newStream); // Store the stream for later use
+      }
+    } catch (error) {
+      console.error("Error accessing camera:", error);
+      setModalMessage("Error accessing camera.");
+    }
+  };
+
+  const stopCamera = () => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop()); // Stop all tracks of the stream
+      setStream(null); // Reset the stream
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-cover bg-center p-2 md:p-4 relative" style={{ backgroundImage: "url('sky.jpg')" }}>
+    <div className="min-h-screen bg-cover bg-center p-2 md:p-4 relative" style={{ backgroundImage: "url('sky.avif')" }}>
       {/* Overlay */}
       <div className="absolute inset-0 bg-black opacity-30 z-0"></div>
 
@@ -229,7 +285,7 @@ const GateScanner = () => {
         </div>
 
         {showScanner && (
-          <div className=" max-w-full w-full mx-auto">
+          <div className="max-w-full w-full mx-auto">
             <QrScanner
               delay={300}
               facingMode={camera} // Pass the camera state to the QrScanner component
@@ -246,7 +302,6 @@ const GateScanner = () => {
               onScan={handleScan}
               onError={handleError}
             />
-
             <button
               onClick={stopScan}
               className="bg-transparent border-2 border-white text-white py-1 md:py-3 px-2 md:px-8 mt-4 text-base md:text-lg font-semibold shadow-none hover:bg-white hover:text-blue-700 transition duration-300 transform hover:scale-105"
