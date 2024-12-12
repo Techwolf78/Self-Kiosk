@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
+import QrScanner from 'react-qr-scanner';
 import { useNavigate } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import QrScanner from 'react-qr-scanner';
 
 /* global responsiveVoice */
 const GateScanner = () => {
@@ -17,27 +17,43 @@ const GateScanner = () => {
   const [timer, setTimer] = useState(null);
   const [isScanning, setIsScanning] = useState(false);
   const [camera, setCamera] = useState('environment');  // Track camera type ('environment' for back, 'user' for front)
-  const [stream, setStream] = useState(null);  // Store the media stream
-  const [cameras, setCameras] = useState([]); // List of available cameras
-  const [selectedCamera, setSelectedCamera] = useState(null); // Selected camera device ID
-  const videoRef = useRef(null);  // Ref for the video element
   const navigate = useNavigate();
 
-  const predefinedGuests = [
-    { barcode: '1234567890', name: 'Mr Suvarnanidhi Rao' },
-    { barcode: '3456789012', name: 'Mr Ramchandra Honap' }
-  ];
+  // Function to speak the message once and close the modal after 1 second
+  const speakMessageOnce = (message) => {
+    if (typeof responsiveVoice !== "undefined") {
+      // Use ResponsiveVoice API to speak the message
+      responsiveVoice.speak(message, "Hindi Male", {
+        pitch: 1,
+        rate: 1,
+        volume: 1,
+      });
+
+      // Handle after speech ends
+      responsiveVoice.onend = () => {
+        setTimeout(() => {
+          setModalMessage("");  // Clears the message after 200ms
+          // Open scanner automatically after another 300ms
+          setTimeout(() => {
+            startScan(); // Open the scanner automatically
+          }, 300); // Delay of 300ms (0.3 seconds)
+        }, 200); // Clears modalMessage after 200ms
+      };
+    }
+  };
 
   const handleScan = async (data) => {
-    if (data && !isScanning) {
-      const barcode = data.text.trim();
-      console.log('Scanned Barcode:', barcode);
+    if (data && !isScanning) {  // Only process if not already scanning
+      const barcode = data.text.trim();  // Trim any extra spaces from the scanned barcode
+      console.log('Scanned Barcode:', barcode);  // This prints the barcode to the console
+
       setScannedData(barcode);
-      setIsScanning(true);
+      setIsScanning(true); // Set scanning state to true
       setLoading(true);
       setModalMessage('Processing...');
-
+    
       try {
+        // Fetch the scanned barcode from the backend for validation
         const response = await fetch('https://self-kiosk-backenddb.onrender.com/api/check-in', {
           method: 'POST',
           headers: {
@@ -45,58 +61,42 @@ const GateScanner = () => {
           },
           body: JSON.stringify({ barcode }),
         });
-
+    
         const result = await response.json();
-        console.log('Backend result:', result);
-
+        console.log('Backend result:', result);  // Check what response is coming from backend
+    
         if (result.status === 'found') {
           const welcomeMessage = `Welcome ${result.name}`;
           setModalMessage(welcomeMessage);
           speakMessageOnce(`Welcome to Synergy Sphere ${result.name}`);
-
+    
+          // Get current time in IST
           const date = new Date();
           const options = { timeZone: 'Asia/Kolkata', hour12: false };
           const arrivalTime = date.toLocaleString('en-IN', options);
-
+    
+          // Show toast notification with name and arrival time
           toast.success(`Welcome ${result.name}, Arrived at ${arrivalTime}`, {
             position: 'top-right',
             autoClose: 5000,
             hideProgressBar: true,
           });
-
+    
         } else {
-          const guest = predefinedGuests.find(g => g.barcode.trim() === barcode.trim());
-          if (guest) {
-            const welcomeMessage = `Welcome ${guest.name}`;
-            setModalMessage(welcomeMessage);
-            speakMessageOnce(`Welcome to Synergy Sphere ${guest.name}`);
-
-            const date = new Date();
-            const options = { timeZone: 'Asia/Kolkata', hour12: false };
-            const arrivalTime = date.toLocaleString('en-IN', options);
-
-            toast.success(`Welcome ${guest.name}, Arrived at ${arrivalTime}`, {
-              position: 'top-right',
-              autoClose: 5000,
-              hideProgressBar: true,
-            });
-
-          } else {
-            setModalMessage("Barcode not found. Contact Admin.");
-          }
+          setModalMessage("Barcode not found. Contact Admin.");
         }
-
+    
       } catch (error) {
         console.error("Error verifying guest:", error);
         setModalMessage("Error verifying guest. Please try again.");
       } finally {
         setLoading(false);
-        setShowScanner(false);
-        setIsScanning(false);
+        setShowScanner(false); // Close scanner after processing
+        setIsScanning(false); // Reset scanning state
       }
     }
   };
-
+  
   const handleError = (err) => {
     console.error("Error scanning barcode:", err);
     setModalMessage("Error scanning barcode. Please try again.");
@@ -104,26 +104,36 @@ const GateScanner = () => {
 
   const startScan = () => {
     setShowScanner(true);
+    // Reset timer when scanner starts
     resetScannerTimer();
   };
 
   const stopScan = () => {
     setShowScanner(false);
-    clearTimeout(timer);
-    setIsScanning(false);
+    clearTimeout(timer); // Clear timer when manually closing
+    setIsScanning(false); // Reset scanning state when manually closed
   };
 
+  // Function to reset the inactivity timer
   const resetScannerTimer = () => {
+    // Clear the existing timer, if any
     if (timer) clearTimeout(timer);
+
+    // Set a new timer for inactivity (5 minutes = 300000ms)
     const newTimer = setTimeout(() => {
       setModalMessage("Scanner closed due to inactivity.");
-      setShowScanner(false);
-    }, 300000);
-    setTimer(newTimer);
+      setShowScanner(false); // Automatically close scanner after 5 minutes
+    }, 300000); // 5 minutes
+    setTimer(newTimer); // Store the timer
   };
 
   const openLoginModal = () => {
     setShowLoginModal(true);
+  };
+
+  // Switch camera between front and back
+  const switchCamera = () => {
+    setCamera(prevCamera => prevCamera === 'environment' ? 'user' : 'environment');
   };
 
   const closeLoginModal = () => {
@@ -145,65 +155,9 @@ const GateScanner = () => {
     }
   };
 
-  useEffect(() => {
-    if (showScanner) {
-      initializeCamera(selectedCamera || camera); // Initialize the selected or default camera
-    } else {
-      stopCamera();
-    }
-
-    return () => {
-      stopCamera();
-    };
-  }, [showScanner, selectedCamera]);
-
-  const initializeCamera = async (deviceId) => {
-    try {
-      const newStream = await navigator.mediaDevices.getUserMedia({
-        video: { deviceId: deviceId ? { exact: deviceId } : undefined },
-      });
-
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = newStream;
-      }
-
-      setStream(newStream);
-    } catch (error) {
-      console.error("Error accessing camera:", error);
-      setModalMessage("Error accessing camera.");
-    }
-  };
-
-  const stopCamera = () => {
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
-      setStream(null);
-    }
-  };
-
-  const fetchCameras = async () => {
-    try {
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      const videoDevices = devices.filter(device => device.kind === 'videoinput');
-      setCameras(videoDevices);
-      if (videoDevices.length > 0) {
-        setSelectedCamera(videoDevices[0].deviceId); // Default to the first camera
-      }
-    } catch (error) {
-      console.error("Error fetching devices:", error);
-    }
-  };
-
-  useEffect(() => {
-    fetchCameras();
-  }, []);
-
   return (
-    <div className="min-h-screen bg-cover bg-center p-2 md:p-4 relative" style={{ backgroundImage: "url('sky.avif')" }}>
+    <div className="min-h-screen bg-cover bg-center p-2 md:p-4 relative" style={{ backgroundImage: "url('sky.jpg')" }}>
+      {/* Overlay */}
       <div className="absolute inset-0 bg-black opacity-30 z-0"></div>
 
       <div className="flex flex-col items-center justify-between mb-2 z-10 relative">
@@ -217,32 +171,22 @@ const GateScanner = () => {
         <p className="text-white text-3xl md:text-4xl font-light mb-6 cookie-regular">&quot;Unison of Industry & Academia&quot;</p>
 
         <div className="mb-2 flex justify-center w-auto h-48">
-          <img src="logo.png" alt="Banner" className="object-contain rounded-lg shadow-lg" />
+          <img src="logo.png" alt="Banner" className="object-contain rounded-lg shadow-lg"/>
         </div>
 
         <button
-          onClick={startScan}
-          className="bg-transparent border-2 border-white text-white p-1 px-8 text-base md:text-lg font-semibold shadow-none hover:bg-white hover:text-blue-700 transition duration-300 transform hover:scale-105 mx-4 my-1"
-        >
-          SCAN
-        </button>
-
-        {/* Dropdown for Camera Selection */}
-        <div className="mt-4">
-        <select
-  onChange={(e) => setSelectedCamera(e.target.value)}
-  value={selectedCamera || ""} // Fallback to empty string if selectedCamera is null
-  className="bg-transparent border-2 border-white text-white py-2 px-4 text-lg font-semibold"
->
-  {cameras.map(camera => (
-    <option key={camera.deviceId} value={camera.deviceId}>
-      {camera.label || `Camera ${cameras.indexOf(camera) + 1}`}
-    </option>
-  ))}
-</select>
-
-        </div>
-
+            onClick={startScan}
+            className="bg-transparent border-2 border-white text-white p-1 px-8 text-base md:text-lg font-semibold shadow-none hover:bg-white hover:text-blue-700 transition duration-300 transform hover:scale-105 mx-4 my-1"
+          >
+            SCAN
+          </button>
+          
+          <button
+            onClick={switchCamera}
+            className="bg-transparent border-2 border-white text-white p-1 px-8 text-base md:text-lg font-semibold shadow-none hover:bg-white hover:text-blue-700 transition duration-300 transform hover:scale-105 mx-4 my-1"
+          >
+            Switch Camera
+          </button>
         <br />
         <div className="mt-6 flex justify-center">
           <button
@@ -254,7 +198,7 @@ const GateScanner = () => {
         </div>
 
         {showScanner && (
-          <div className="max-w-full w-full mx-auto">
+          <div className=" max-w-full w-full mx-auto">
             <QrScanner
               delay={300}
               facingMode={camera} // Pass the camera state to the QrScanner component
@@ -271,6 +215,7 @@ const GateScanner = () => {
               onScan={handleScan}
               onError={handleError}
             />
+
             <button
               onClick={stopScan}
               className="bg-transparent border-2 border-white text-white py-1 md:py-3 px-2 md:px-8 mt-4 text-base md:text-lg font-semibold shadow-none hover:bg-white hover:text-blue-700 transition duration-300 transform hover:scale-105"
