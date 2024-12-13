@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import QrScanner from 'react-qr-scanner';
 import { useNavigate } from 'react-router-dom';
-import { toast, ToastContainer } from 'react-toastify';  // Import toastify
-import 'react-toastify/dist/ReactToastify.css';  // Import toastify CSS
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 /* global responsiveVoice */
 const GateScanner = () => {
@@ -19,11 +19,6 @@ const GateScanner = () => {
   const [camera, setCamera] = useState('environment');  // Track camera type ('environment' for back, 'user' for front)
   const navigate = useNavigate();
 
-  const predefinedGuests = [
-    { barcode: '1234567890', name: 'Mr Suvarnanidhi Rao' },
-    { barcode: '3456789012', name: 'Mr Ramchandra Honap' }
-  ];
-  
   // Function to speak the message once and close the modal after 1 second
   const speakMessageOnce = (message) => {
     if (typeof responsiveVoice !== "undefined") {
@@ -49,19 +44,16 @@ const GateScanner = () => {
 
   const handleScan = async (data) => {
     if (data && !isScanning) {  // Only process if not already scanning
-      // Trim any extra spaces from the scanned barcode
-      const barcode = data.text.trim();  
-      
-      // Log the scanned barcode to the console
+      const barcode = data.text.trim();  // Trim any extra spaces from the scanned barcode
       console.log('Scanned Barcode:', barcode);  // This prints the barcode to the console
-  
+
       setScannedData(barcode);
       setIsScanning(true); // Set scanning state to true
       setLoading(true);
       setModalMessage('Processing...');
     
       try {
-        // First, try to fetch from the backend
+        // Fetch the scanned barcode from the backend for validation
         const response = await fetch('https://self-kiosk-backenddb.onrender.com/api/check-in', {
           method: 'POST',
           headers: {
@@ -91,30 +83,7 @@ const GateScanner = () => {
           });
     
         } else {
-          // If not found in the backend, check against predefined guest array
-          const guest = predefinedGuests.find(g => g.barcode.trim() === barcode.trim());
-          console.log('Predefined Guest:', guest);  // Check if it finds the correct guest
-          
-          if (guest) {
-            const welcomeMessage = `Welcome ${guest.name}`;
-            setModalMessage(welcomeMessage);
-            speakMessageOnce(`Welcome to Synergy Sphere ${guest.name}`);
-              
-            // Get current time in IST
-            const date = new Date();
-            const options = { timeZone: 'Asia/Kolkata', hour12: false };
-            const arrivalTime = date.toLocaleString('en-IN', options);
-    
-            // Show toast notification with name and arrival time
-            toast.success(`Welcome ${guest.name}, Arrived at ${arrivalTime}`, {
-              position: 'top-right',
-              autoClose: 5000,
-              hideProgressBar: true,
-            });
-    
-          } else {
-            setModalMessage("Barcode not found. Contact Admin.");
-          }
+          setModalMessage("Barcode not found. Contact Admin.");
         }
     
       } catch (error) {
