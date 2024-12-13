@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import QrScanner from 'react-qr-scanner';
 import { useNavigate } from 'react-router-dom';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast, ToastContainer } from 'react-toastify';  // Import toastify
+import 'react-toastify/dist/ReactToastify.css';  // Import toastify CSS
 
 /* global responsiveVoice */
 const GateScanner = () => {
@@ -16,50 +16,52 @@ const GateScanner = () => {
   const [loginError, setLoginError] = useState('');
   const [timer, setTimer] = useState(null);
   const [isScanning, setIsScanning] = useState(false);
-  const [camera, setCamera] = useState('environment');  // Track camera type ('environment' for back, 'user' for front)
+  const [camera] = useState('user');  // Always use the front camera
   const navigate = useNavigate();
 
+  const predefinedGuests = [
+    { barcode: '1234567890', name: 'Mr Suvarnanidhi Rao' },
+    { barcode: '3456789012', name: 'Mr Ramchandra Honap' }
+  ];
+  
   // Function to speak the message once and close the modal after 1 second
   const speakMessageOnce = (message) => {
-    if (typeof responsiveVoice !== "undefined") {
-      responsiveVoice.speak(message, "Hindi Male", {
-        pitch: 1,
-        rate: 1,
-        volume: 1,
-      });
+    const utterance = new SpeechSynthesisUtterance(message);
+    utterance.lang = 'hi-IN'; // For Hindi language
+    utterance.pitch = 1;
+    utterance.rate = 1;
+    utterance.volume = 1;
   
-      responsiveVoice.onend = () => {
-        console.log('Speech completed. Preparing to reload the page.');
+    // Speak the message
+    window.speechSynthesis.speak(utterance);
   
-        // Use setTimeout to delay the reload by 1 second after speech ends
+    // Handle after speech ends
+    utterance.onend = () => {
+      setTimeout(() => {
+        setModalMessage("");  // Clears the message after 200ms
         setTimeout(() => {
-          setModalMessage("");  // Clear the message (optional)
-          setTimeout(() => {
-            console.log('Reloading the page now...');
-            window.location.reload();  // Reload the page after 1 second
-          }, 200);  // Delay reload by 200ms to ensure UI updates before reload
-        }, 1000);  // Delay reload by 1 second after speech ends
-      };
-    } else {
-      console.error('responsiveVoice is not defined!');
-    }
+          startScan(); // Open the scanner automatically
+        }, 300); // Delay of 300ms (0.3 seconds)
+      }, 200); // Clears modalMessage after 200ms
+    };
   };
-  
-  
   
 
   const handleScan = async (data) => {
     if (data && !isScanning) {  // Only process if not already scanning
-      const barcode = data.text.trim();  // Trim any extra spaces from the scanned barcode
+      // Trim any extra spaces from the scanned barcode
+      const barcode = data.text.trim();  
+      
+      // Log the scanned barcode to the console
       console.log('Scanned Barcode:', barcode);  // This prints the barcode to the console
-
+  
       setScannedData(barcode);
       setIsScanning(true); // Set scanning state to true
       setLoading(true);
       setModalMessage('Processing...');
     
       try {
-        // Fetch the scanned barcode from the backend for validation
+        // First, try to fetch from the backend
         const response = await fetch('https://self-kiosk-backenddb.onrender.com/api/check-in', {
           method: 'POST',
           headers: {
@@ -89,7 +91,30 @@ const GateScanner = () => {
           });
     
         } else {
-          setModalMessage("Barcode not found. Contact Admin.");
+          // If not found in the backend, check against predefined guest array
+          const guest = predefinedGuests.find(g => g.barcode.trim() === barcode.trim());
+          console.log('Predefined Guest:', guest);  // Check if it finds the correct guest
+          
+          if (guest) {
+            const welcomeMessage = `Welcome ${guest.name}`;
+            setModalMessage(welcomeMessage);
+            speakMessageOnce(`Welcome to Synergy Sphere ${guest.name}`);
+              
+            // Get current time in IST
+            const date = new Date();
+            const options = { timeZone: 'Asia/Kolkata', hour12: false };
+            const arrivalTime = date.toLocaleString('en-IN', options);
+    
+            // Show toast notification with name and arrival time
+            toast.success(`Welcome ${guest.name}, Arrived at ${arrivalTime}`, {
+              position: 'top-right',
+              autoClose: 5000,
+              hideProgressBar: true,
+            });
+    
+          } else {
+            setModalMessage("Barcode not found. Contact Admin.");
+          }
         }
     
       } catch (error) {
@@ -137,11 +162,6 @@ const GateScanner = () => {
     setShowLoginModal(true);
   };
 
-  // Switch camera between front and back
-  const switchCamera = () => {
-    setCamera(prevCamera => prevCamera === 'environment' ? 'user' : 'environment');
-  };
-
   const closeLoginModal = () => {
     setShowLoginModal(false);
     setUsername('');
@@ -186,13 +206,7 @@ const GateScanner = () => {
           >
             SCAN
           </button>
-          
-          <button
-            onClick={switchCamera}
-            className="bg-transparent border-2 border-white text-white p-1 px-8 text-base md:text-lg font-semibold shadow-none hover:bg-white hover:text-blue-700 transition duration-300 transform hover:scale-105 mx-4 my-1"
-          >
-            Switch Camera
-          </button>
+
         <br />
         <div className="mt-6 flex justify-center">
           <button
@@ -207,7 +221,7 @@ const GateScanner = () => {
           <div className=" max-w-full w-full mx-auto">
             <QrScanner
               delay={300}
-              facingMode={camera} // Pass the camera state to the QrScanner component
+              facingMode={camera} // Always use the front camera (user)
               style={{
                 width: '100%',
                 maxWidth: '800px',
