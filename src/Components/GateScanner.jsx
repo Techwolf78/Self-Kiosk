@@ -22,25 +22,31 @@ const GateScanner = () => {
   // Function to speak the message once and close the modal after 1 second
   const speakMessageOnce = (message) => {
     if (typeof responsiveVoice !== "undefined") {
-      // Use ResponsiveVoice API to speak the message
       responsiveVoice.speak(message, "Hindi Male", {
         pitch: 1,
         rate: 1,
         volume: 1,
       });
-
-      // Handle after speech ends
+  
       responsiveVoice.onend = () => {
+        console.log('Speech completed. Preparing to reload the page.');
+  
+        // Use setTimeout to delay the reload by 1 second after speech ends
         setTimeout(() => {
-          setModalMessage("");  // Clears the message after 200ms
-          // Open scanner automatically after another 300ms
+          setModalMessage("");  // Clear the message (optional)
           setTimeout(() => {
-            startScan(); // Open the scanner automatically
-          }, 300); // Delay of 300ms (0.3 seconds)
-        }, 200); // Clears modalMessage after 200ms
+            console.log('Reloading the page now...');
+            window.location.reload();  // Reload the page after 1 second
+          }, 200);  // Delay reload by 200ms to ensure UI updates before reload
+        }, 1000);  // Delay reload by 1 second after speech ends
       };
+    } else {
+      console.error('responsiveVoice is not defined!');
     }
   };
+  
+  
+  
 
   const handleScan = async (data) => {
     if (data && !isScanning) {  // Only process if not already scanning
