@@ -16,7 +16,7 @@ const GateScanner = () => {
   const [loginError, setLoginError] = useState('');
   const [timer, setTimer] = useState(null);
   const [isScanning, setIsScanning] = useState(false);
-  const [camera] = useState('user');  // Always use the front camera
+  const [camera, setCamera] = useState('environment');  // Track camera type ('environment' for back, 'user' for front)
   const navigate = useNavigate();
 
   const predefinedGuests = [
@@ -26,26 +26,26 @@ const GateScanner = () => {
   
   // Function to speak the message once and close the modal after 1 second
   const speakMessageOnce = (message) => {
-    const utterance = new SpeechSynthesisUtterance(message);
-    utterance.lang = 'hi-IN'; // For Hindi language
-    utterance.pitch = 1;
-    utterance.rate = 1;
-    utterance.volume = 1;
-  
-    // Speak the message
-    window.speechSynthesis.speak(utterance);
-  
-    // Handle after speech ends
-    utterance.onend = () => {
-      setTimeout(() => {
-        setModalMessage("");  // Clears the message after 200ms
+    if (typeof responsiveVoice !== "undefined") {
+      // Use ResponsiveVoice API to speak the message
+      responsiveVoice.speak(message, "Hindi Male", {
+        pitch: 1,
+        rate: 1,
+        volume: 1,
+      });
+
+      // Handle after speech ends
+      responsiveVoice.onend = () => {
         setTimeout(() => {
-          startScan(); // Open the scanner automatically
-        }, 300); // Delay of 300ms (0.3 seconds)
-      }, 200); // Clears modalMessage after 200ms
-    };
+          setModalMessage("");  // Clears the message after 200ms
+          // Open scanner automatically after another 300ms
+          setTimeout(() => {
+            startScan(); // Open the scanner automatically
+          }, 300); // Delay of 300ms (0.3 seconds)
+        }, 200); // Clears modalMessage after 200ms
+      };
+    }
   };
-  
 
   const handleScan = async (data) => {
     if (data && !isScanning) {  // Only process if not already scanning
@@ -162,6 +162,11 @@ const GateScanner = () => {
     setShowLoginModal(true);
   };
 
+  // Switch camera between front and back
+  const switchCamera = () => {
+    setCamera(prevCamera => prevCamera === 'environment' ? 'user' : 'environment');
+  };
+
   const closeLoginModal = () => {
     setShowLoginModal(false);
     setUsername('');
@@ -206,7 +211,13 @@ const GateScanner = () => {
           >
             SCAN
           </button>
-
+          
+          <button
+            onClick={switchCamera}
+            className="bg-transparent border-2 border-white text-white p-1 px-8 text-base md:text-lg font-semibold shadow-none hover:bg-white hover:text-blue-700 transition duration-300 transform hover:scale-105 mx-4 my-1"
+          >
+            Switch Camera
+          </button>
         <br />
         <div className="mt-6 flex justify-center">
           <button
@@ -221,7 +232,7 @@ const GateScanner = () => {
           <div className=" max-w-full w-full mx-auto">
             <QrScanner
               delay={300}
-              facingMode={camera} // Always use the front camera (user)
+              facingMode={camera} // Pass the camera state to the QrScanner component
               style={{
                 width: '100%',
                 maxWidth: '800px',
