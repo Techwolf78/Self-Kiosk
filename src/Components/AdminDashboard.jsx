@@ -93,11 +93,23 @@ const AdminDashboard = () => {
     setSortConfig({ key, direction });
   };
 
-  // Filter the guests based on the selected filter
-  const filteredGuests = sortedGuests().filter((guest) => {
-    if (filter === "All") return true;
-    return guest.status === filter;
-  });
+// Filter the guests based on the selected filter
+// Filter the guests based on the selected filter
+const filteredGuests = sortedGuests().filter((guest) => {
+  if (filter === "All") return true; // Show all guests if the filter is "All"
+  
+  // If the filter is "Pending", exclude guests with the status "Arrived"
+  if (filter === "Pending") {
+    return guest.status !== "Arrived"; // Exclude "Arrived" guests when "Pending" filter is selected
+  }
+
+  // Consider blank status as "Pending"
+  const guestStatus = guest.status || "Pending"; // If status is blank, treat it as "Pending"
+  
+  return guestStatus === filter; // Only show guests that match the selected status filter
+});
+
+
 
   // Calculate stats
   const totalGuests = filteredGuests.length;
@@ -298,16 +310,17 @@ const AdminDashboard = () => {
                         {guest.organization}
                       </td>
                       <td className="px-6 py-4">
-                        <span
-                          className={`${
-                            guest.status === "Arrived"
-                              ? "text-green-300"
-                              : "text-yellow-300"
-                          } font-semibold`}
-                        >
-                          {guest.status}
-                        </span>
-                      </td>
+  <span
+    className={`${
+      (guest.status === "Arrived" || guest.status === "Pending")
+        ? "text-green-300"
+        : "text-yellow-300"
+    } font-semibold`}
+  >
+    {guest.status || "Pending"} {/* Display "Pending" if status is blank */}
+  </span>
+</td>
+
                       <td className="px-6 py-4 text-white">{guest.arrivalTime}</td>
                     </tr>
                   ))}
