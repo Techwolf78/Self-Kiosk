@@ -22,25 +22,44 @@ const GateScanner = () => {
   // Function to speak the message once and close the modal after 1 second
   const speakMessageOnce = (message) => {
     if (typeof responsiveVoice !== "undefined") {
-      // Use ResponsiveVoice API to speak the message
-      responsiveVoice.speak(message, "Hindi Male", {
-        pitch: 1,
-        rate: 1,
-        volume: 1,
-      });
-
-      // Handle after speech ends
-      responsiveVoice.onend = () => {
-        setTimeout(() => {
-          setModalMessage("");  // Clears the message after 200ms
-          // Open scanner automatically after another 300ms
-          setTimeout(() => {
-            startScan(); // Open the scanner automatically
-          }, 300); // Delay of 300ms (0.3 seconds)
-        }, 200); // Clears modalMessage after 200ms
-      };
+      // Replace abbreviations with their full forms for better pronunciation
+      const correctedMessage = message
+        .replace(/\bMs\.\b/g, "Miss")
+        .replace(/\bMr\.\b/g, "Mister");
+  
+      const voices = [
+        { lang: "US English Male", voice: "US English Male" },
+        { lang: "UK English", voice: "UK English Female" },
+        { lang: "US Hindi Male", voice: "Hindi Male" },
+      ];
+  
+      // Try each voice in the array until one works
+      let voiceUsed = false;
+      for (let i = 0; i < voices.length; i++) {
+        if (responsiveVoice.isPlaying() || !voiceUsed) {
+          responsiveVoice.speak(correctedMessage, voices[i].lang, {
+            pitch: 1,
+            rate: 1,
+            volume: 1,
+          });
+  
+          // Check if the voice is available by listening to the end event
+          responsiveVoice.onend = () => {
+            voiceUsed = true;
+            setTimeout(() => {
+              setModalMessage(""); // Clears the message after 200ms
+              setTimeout(() => {
+                window.location.reload(); // Reload the page after audio completes
+              }, 300); // Delay of 300ms (0.3 seconds)
+            }, 200); // Clears modalMessage after 200ms
+          };
+  
+          break; // Exit the loop after successfully speaking the message
+        }
+      }
     }
   };
+  
 
   const handleScan = async (data) => {
     if (data && !isScanning) {  // Only process if not already scanning
@@ -131,11 +150,6 @@ const GateScanner = () => {
     setShowLoginModal(true);
   };
 
-  // Switch camera between front and back
-  const switchCamera = () => {
-    setCamera(prevCamera => prevCamera === 'environment' ? 'user' : 'environment');
-  };
-
   const closeLoginModal = () => {
     setShowLoginModal(false);
     setUsername('');
@@ -181,12 +195,6 @@ const GateScanner = () => {
             SCAN
           </button>
           
-          <button
-            onClick={switchCamera}
-            className="bg-transparent border-2 border-white text-white p-1 px-8 text-base md:text-lg font-semibold shadow-none hover:bg-white hover:text-blue-700 transition duration-300 transform hover:scale-105 mx-4 my-1"
-          >
-            Switch Camera
-          </button>
         <br />
         <div className="mt-6 flex justify-center">
           <button
@@ -284,19 +292,20 @@ const GateScanner = () => {
         </div>
       )}
 
-      {modalMessage && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50">
-          <div className="bg-transparent p-8 text-center shadow-xl border-2 border-white text-white backdrop-blur-md backdrop-brightness-75">
-            <p className="text-xl font-semibold">{modalMessage}</p>
-            <button
-              onClick={() => setModalMessage("")}
-              className="mt-2 bg-transparent border-2 border-white text-white py-2 px-8 rounded-xl transition duration-300 hover:bg-blue-700"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
+{modalMessage && (
+  <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50">
+    <div className="bg-transparent p-8 text-center shadow-xl border-2 border-white text-white backdrop-blur-md backdrop-brightness-75">
+      <p className="text-xl font-semibold mb-4">{modalMessage}</p> {/* Added margin-bottom */}
+      <button
+        onClick={() => setModalMessage("")}
+        className="mt-4 bg-transparent border-2 border-white text-white py-2 px-8 rounded-xl transition duration-300 hover:bg-blue-700"
+      >
+        Close
+      </button>
+    </div>
+  </div>
+)}
+
 
       <ToastContainer /> {/* Add this to render the toast notifications */}
     </div>
