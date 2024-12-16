@@ -65,7 +65,7 @@ const GateScanner = () => {
     if (data && !isScanning) {  // Only process if not already scanning
       const barcode = data.text.trim();  // Trim any extra spaces from the scanned barcode
       console.log('Scanned Barcode:', barcode);  // This prints the barcode to the console
-
+  
       setScannedData(barcode);
       setIsScanning(true); // Set scanning state to true
       setLoading(true);
@@ -102,7 +102,10 @@ const GateScanner = () => {
           });
     
         } else {
-          setModalMessage("Barcode not found. Contact Admin.");
+          // Updated message here for "not found" scenario
+          const notFoundMessage = "WELCOME TO SYNERGY SPHERE 2024";
+          setModalMessage(notFoundMessage);
+          speakMessageOnce(notFoundMessage);  // Speak the message for not found case
         }
     
       } catch (error) {
@@ -115,6 +118,7 @@ const GateScanner = () => {
       }
     }
   };
+  
   
   const handleError = (err) => {
     console.error("Error scanning barcode:", err);
